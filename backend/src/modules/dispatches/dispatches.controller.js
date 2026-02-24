@@ -5,6 +5,7 @@ import Invoice from "../invoices/invoices.model.js";
 import catchAsync from "../../utils/catchAsync.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
+import { sendDispatchEmail } from "../../utils/emailService.js";
 
 // ===========================
 // GET /api/dispatches/my
@@ -402,6 +403,8 @@ async function createInvoiceFromDispatch(dispatch, sourceDoc, invoiceNumber) {
       ...(isFromPI && {
         proforma_invoice: dispatch.source_id,
         proforma_invoice_number: dispatch.source_number,
+        quote_reference: sourceDoc.quote_number || sourceDoc.quotation_number || "",
+        quotation: sourceDoc.quotation || null,
       }),
       ...(isFromOrder && {
         order: dispatch.source_id,
@@ -473,6 +476,8 @@ async function createInvoiceFromDispatch(dispatch, sourceDoc, invoiceNumber) {
     const invoice = new Invoice(invoiceData);
     await invoice.save();
 
+    console.log(`[Dispatch] Invoice created successfully: ${invoice.invoice_number}`);
+
     // Update source document with invoice reference
     if (isFromPI) {
       await ProformaInvoice.findByIdAndUpdate(dispatch.source_id, {
@@ -484,7 +489,13 @@ async function createInvoiceFromDispatch(dispatch, sourceDoc, invoiceNumber) {
 
     return invoice;
   } catch (error) {
-    console.error("Error creating invoice from dispatch:", error);
+    console.error("[Dispatch] Error creating invoice from dispatch:", error.message);
+    console.error("[Dispatch] Invoice data that failed:", JSON.stringify({
+      invoice_number: invoiceNumber,
+      buyer: dispatch.buyer,
+      buyer_name: dispatch.buyer_name,
+      source_type: dispatch.source_type,
+    }, null, 2));
     return null;
   }
 }
@@ -626,5 +637,50 @@ export const getSummary = catchAsync(async (req, res) => {
       })),
     },
     "Dispatch summary fetched"
+  );
+});
+
+// ===========================
+// POST /api/dispatches/:id/send-email
+// ===========================
+// Admin only — send dispatch notification via email to buyer
+export const sendEmail = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { recipientEmail, customMessage } = req.body;
+
+  const dispatch = await Dispatch.findById(id)
+    .populate("buyer", "name email user_id");
+
+  if (!dispatch) {
+    throw new AppError("Dispatch not found", 404);
+  }
+
+  // Determine recipient email
+  const emailTo = recipientEmail || dispatch.buyer_email || dispatch.buyer?.email;
+
+  if (!emailTo) {
+    throw new AppError("No recipient email address available", 400);
+  }
+
+  // Send email (no PDF attachment for dispatches)
+  try {
+    await sendDispatchEmail(dispatch, emailTo, {
+      customMessage,
+    });
+  } catch (emailError) {
+    console.error("[DispatchesController] Email send failed:", emailError.message);
+    throw new AppError(`Failed to send email: ${emailError.message}`, 500);
+  }
+
+  // Update dispatch tracking
+  dispatch.is_emailed = true;
+  dispatch.last_emailed_at = new Date();
+  dispatch.email_count = (dispatch.email_count || 0) + 1;
+  await dispatch.save();
+
+  return ApiResponse.success(
+    res,
+    { dispatch, emailSentTo: emailTo },
+    `Dispatch notification sent successfully to ${emailTo}`
   );
 });

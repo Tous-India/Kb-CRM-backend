@@ -13,21 +13,13 @@ import { generateStatementPDF } from "../../utils/pdfGenerator.js";
 // GET /api/statements
 // ===========================
 // Admin only — fetch all statements
+// No pagination needed: ~100 statements per reporting period
 export const getAll = catchAsync(async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const statements = await Statement.find()
+    .populate("buyer", "name email user_id")
+    .sort({ createdAt: -1 });
 
-  const skip = (Number(page) - 1) * Number(limit);
-
-  const [statements, total] = await Promise.all([
-    Statement.find()
-      .populate("buyer", "name email user_id")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit)),
-    Statement.countDocuments(),
-  ]);
-
-  return ApiResponse.paginated(res, statements, page, limit, total, "Statements fetched");
+  return ApiResponse.success(res, { statements }, "Statements fetched");
 });
 
 // ===========================
@@ -146,22 +138,14 @@ export const getMyStatement = catchAsync(async (req, res) => {
 // GET /api/statements/customer/:customerId
 // ===========================
 // Admin only — fetch statements for a customer
+// No pagination needed: bounded by customer statement history
 export const getByCustomer = catchAsync(async (req, res) => {
   const { customerId } = req.params;
-  const { page = 1, limit = 20 } = req.query;
 
-  const filter = { buyer: customerId };
-  const skip = (Number(page) - 1) * Number(limit);
+  const statements = await Statement.find({ buyer: customerId })
+    .sort({ createdAt: -1 });
 
-  const [statements, total] = await Promise.all([
-    Statement.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit)),
-    Statement.countDocuments(filter),
-  ]);
-
-  return ApiResponse.paginated(res, statements, page, limit, total, "Customer statements fetched");
+  return ApiResponse.success(res, { statements }, "Customer statements fetched");
 });
 
 // ===========================

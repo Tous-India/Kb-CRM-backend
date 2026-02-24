@@ -12,8 +12,9 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 // GET /api/suppliers
 // ===========================
 // Admin — fetch all suppliers with search/filter
+// No pagination needed: max 100 suppliers (fixed business limit)
 export const getAll = catchAsync(async (req, res) => {
-  const { search, status, page = 1, limit = 50 } = req.query;
+  const { search, status } = req.query;
 
   const query = {};
 
@@ -31,29 +32,9 @@ export const getAll = catchAsync(async (req, res) => {
     ];
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const suppliers = await Supplier.find(query).sort({ createdAt: -1 });
 
-  const [suppliers, total] = await Promise.all([
-    Supplier.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit)),
-    Supplier.countDocuments(query),
-  ]);
-
-  return ApiResponse.success(
-    res,
-    {
-      suppliers,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / parseInt(limit)),
-      },
-    },
-    "Suppliers fetched"
-  );
+  return ApiResponse.success(res, { suppliers }, "Suppliers fetched");
 });
 
 // ===========================

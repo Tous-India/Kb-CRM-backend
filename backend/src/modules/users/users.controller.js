@@ -3,13 +3,19 @@ import catchAsync from "../../utils/catchAsync.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
 import { ROLES, ALL_PERMISSIONS } from "../../constants/index.js";
+import {
+  sendBuyerInquiryEmail,
+  sendBuyerApprovalEmail,
+  sendBuyerRejectionEmail,
+} from "../../utils/emailService.js";
 
 // ===========================
 // GET /api/users
 // ===========================
 // Admin only — fetch all users with optional filters
+// No pagination needed: max ~150 users (100 buyers + 50 admins)
 export const getAll = catchAsync(async (req, res) => {
-  const { role, is_active, page = 1, limit = 20, search } = req.query;
+  const { role, is_active, search } = req.query;
 
   const filter = {};
   if (role) filter.role = role;
@@ -22,26 +28,20 @@ export const getAll = catchAsync(async (req, res) => {
     ];
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const users = await User.find(filter)
+    .select("-password")
+    .sort({ createdAt: -1 });
 
-  const [users, total] = await Promise.all([
-    User.find(filter)
-      .select("-password")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit)),
-    User.countDocuments(filter),
-  ]);
-
-  return ApiResponse.paginated(res, users, page, limit, total, "Users fetched");
+  return ApiResponse.success(res, { users }, "Users fetched");
 });
 
 // ===========================
 // GET /api/users/buyers
 // ===========================
 // Admin only — fetch all buyers
+// No pagination needed: max 100 buyers (fixed business limit)
 export const getBuyers = catchAsync(async (req, res) => {
-  const { page = 1, limit = 20, search } = req.query;
+  const { search } = req.query;
 
   const filter = { role: ROLES.BUYER };
   if (search) {
@@ -51,18 +51,11 @@ export const getBuyers = catchAsync(async (req, res) => {
     ];
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const buyers = await User.find(filter)
+    .select("-password")
+    .sort({ createdAt: -1 });
 
-  const [buyers, total] = await Promise.all([
-    User.find(filter)
-      .select("-password")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit)),
-    User.countDocuments(filter),
-  ]);
-
-  return ApiResponse.paginated(res, buyers, page, limit, total, "Buyers fetched");
+  return ApiResponse.success(res, { buyers }, "Buyers fetched");
 });
 
 // ===========================
@@ -89,6 +82,111 @@ export const getById = catchAsync(async (req, res) => {
   }
 
   return ApiResponse.success(res, { user }, "User fetched");
+});
+
+// ===========================
+// GET /api/users/profile/me
+// ===========================
+// Get current user's profile (any authenticated user)
+export const getProfile = catchAsync(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return ApiResponse.success(res, { user }, "Profile fetched");
+});
+
+// ===========================
+// PUT /api/users/profile/me
+// ===========================
+// Update current user's profile (any authenticated user)
+export const updateProfile = catchAsync(async (req, res) => {
+  const {
+    name,
+    email,
+    phone,
+    fax,
+    website,
+    address,
+    company_details,
+  } = req.body;
+
+  const user = await User.findById(req.user._id).select("-password");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  // If email is being changed, check for duplicates
+  if (email !== undefined && email !== user.email) {
+    const existingUser = await User.findOne({ email, _id: { $ne: user._id } });
+    if (existingUser) {
+      throw new AppError("Email is already in use by another account", 400);
+    }
+    user.email = email;
+  }
+
+  // Update allowed fields
+  if (name !== undefined) user.name = name;
+  if (phone !== undefined) user.phone = phone;
+  if (fax !== undefined) user.fax = fax;
+  if (website !== undefined) user.website = website;
+
+  // Update address fields
+  if (address !== undefined) {
+    user.address = {
+      ...user.address?.toObject?.() || {},
+      ...address,
+    };
+  }
+
+  // Update company details
+  if (company_details !== undefined) {
+    user.company_details = {
+      ...user.company_details?.toObject?.() || {},
+      ...company_details,
+    };
+  }
+
+  await user.save();
+
+  return ApiResponse.success(res, { user }, "Profile updated successfully");
+});
+
+// ===========================
+// PUT /api/users/profile/password
+// ===========================
+// Change current user's password
+export const changePassword = catchAsync(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    throw new AppError("Current password and new password are required", 400);
+  }
+
+  if (newPassword.length < 6) {
+    throw new AppError("New password must be at least 6 characters", 400);
+  }
+
+  const user = await User.findById(req.user._id).select("+password");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  // Verify current password
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw new AppError("Current password is incorrect", 401);
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  return ApiResponse.success(res, null, "Password changed successfully");
 });
 
 // ===========================
@@ -168,12 +266,21 @@ export const createSubAdmin = catchAsync(async (req, res) => {
 // ===========================
 // Admin only — update user details
 export const update = catchAsync(async (req, res) => {
-  const { name, phone, address, company_details } = req.body;
+  const { name, email, phone, address, company_details } = req.body;
 
   const user = await User.findById(req.params.id).select("-password");
 
   if (!user) {
     throw new AppError("User not found", 404);
+  }
+
+  // If email is being changed, check for duplicates
+  if (email !== undefined && email !== user.email) {
+    const existingUser = await User.findOne({ email, _id: { $ne: user._id } });
+    if (existingUser) {
+      throw new AppError("Email is already in use by another account", 400);
+    }
+    user.email = email;
   }
 
   if (name !== undefined) user.name = name;
@@ -276,4 +383,153 @@ export const deactivate = catchAsync(async (req, res) => {
   await user.save();
 
   return ApiResponse.success(res, { user }, "User deactivated");
+});
+
+// ===========================
+// POST /api/users/contact
+// ===========================
+// Any authenticated user can send a contact message to admin
+export const sendContactMessage = catchAsync(async (req, res) => {
+  const { subject, message } = req.body;
+
+  if (!subject || !message) {
+    throw new AppError("Subject and message are required", 400);
+  }
+
+  const user = req.user;
+
+  // Build inquiry object for email template
+  const inquiry = {
+    subject,
+    message,
+    buyer: {
+      name: user.name,
+      email: user.email,
+      company_name: user.company_details?.company_name || user.name,
+      phone: user.phone,
+    },
+    // No documentType/documentNumber for general contact
+  };
+
+  // Send email via CRM
+  try {
+    await sendBuyerInquiryEmail(inquiry);
+  } catch (emailError) {
+    console.error("[Users] Contact email failed:", emailError.message);
+    throw new AppError("Failed to send message. Please try again later.", 500);
+  }
+
+  return ApiResponse.success(res, null, "Your message has been sent to our team. We will respond shortly.");
+});
+
+// =====================================================
+// BUYER REGISTRATION APPROVAL ENDPOINTS
+// =====================================================
+
+// ===========================
+// GET /api/users/pending-approvals
+// ===========================
+// Admin only — fetch all buyers pending approval
+// No pagination needed: max 100 buyers (fixed business limit)
+export const getPendingApprovals = catchAsync(async (req, res) => {
+  const filter = {
+    role: ROLES.BUYER,
+    approval_status: "PENDING",
+  };
+
+  const users = await User.find(filter)
+    .select("-password")
+    .sort({ createdAt: -1 });
+
+  return ApiResponse.success(res, { users }, "Pending approvals fetched");
+});
+
+// ===========================
+// GET /api/users/pending-approvals/count
+// ===========================
+// Admin only — get count of pending approvals (for badge)
+export const getPendingApprovalsCount = catchAsync(async (req, res) => {
+  const count = await User.countDocuments({
+    role: ROLES.BUYER,
+    approval_status: "PENDING",
+  });
+
+  return ApiResponse.success(res, { count }, "Pending approvals count fetched");
+});
+
+// ===========================
+// PUT /api/users/:id/approve
+// ===========================
+// Admin only — approve a buyer's registration
+export const approveUser = catchAsync(async (req, res) => {
+  const user = await User.findById(req.params.id).select("-password");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (user.role !== ROLES.BUYER) {
+    throw new AppError("Only buyer registrations can be approved", 400);
+  }
+
+  if (user.approval_status === "APPROVED") {
+    throw new AppError("User is already approved", 400);
+  }
+
+  // Update approval status
+  user.approval_status = "APPROVED";
+  user.approval_date = new Date();
+  user.approved_by = req.user._id;
+  user.is_active = true;
+  user.rejection_reason = undefined;
+
+  await user.save();
+
+  // Send approval email to buyer
+  try {
+    await sendBuyerApprovalEmail(user);
+  } catch (emailError) {
+    console.error("[Users] Approval email failed:", emailError.message);
+    // Don't fail the request if email fails
+  }
+
+  return ApiResponse.success(res, { user }, "User approved successfully. They can now log in.");
+});
+
+// ===========================
+// PUT /api/users/:id/reject
+// ===========================
+// Admin only — reject a buyer's registration
+export const rejectUser = catchAsync(async (req, res) => {
+  const { reason } = req.body;
+  const user = await User.findById(req.params.id).select("-password");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (user.role !== ROLES.BUYER) {
+    throw new AppError("Only buyer registrations can be rejected", 400);
+  }
+
+  if (user.approval_status === "REJECTED") {
+    throw new AppError("User is already rejected", 400);
+  }
+
+  // Update rejection status
+  user.approval_status = "REJECTED";
+  user.rejection_reason = reason || "";
+  user.is_active = false;
+
+  await user.save();
+
+  // Send rejection email to buyer
+  try {
+    await sendBuyerRejectionEmail(user, reason);
+  } catch (emailError) {
+    console.error("[Users] Rejection email failed:", emailError.message);
+    // Don't fail the request if email fails
+  }
+
+  return ApiResponse.success(res, { user }, "User registration rejected");
 });

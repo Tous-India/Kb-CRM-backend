@@ -1,0 +1,51 @@
+[
+  {
+    "_id": "6981ced24079a3adb75b3f25",
+    "name": "Brand A",
+    "description": "",
+    "is_active": true,
+    "createdAt": "2026-02-03T10:32:50.678Z",
+    "updatedAt": "2026-02-03T10:32:50.678Z",
+    "brand_id": "BRD-001",
+    "__v": 0
+  },
+  {
+    "_id": "6985b91c1a7b1df6cf18669c",
+    "name": "Brand B",
+    "logo": {
+      "url": "https://res.cloudinary.com/defrzunwm/image/upload/v1770371362/kb-crm/kb-crm/brands/xchf9zdnmwj3krwqju5q.jpg",
+      "public_id": "kb-crm/kb-crm/brands/xchf9zdnmwj3krwqju5q"
+    },
+    "description": "",
+    "is_active": true,
+    "createdAt": "2026-02-06T09:49:16.928Z",
+    "updatedAt": "2026-02-06T09:49:16.928Z",
+    "brand_id": "BRD-002",
+    "__v": 0
+  },
+  {
+    "_id": "6985b9311a7b1df6cf1866a1",
+    "name": "Brand C",
+    "logo": {
+      "url": "https://res.cloudinary.com/defrzunwm/image/upload/v1770371382/kb-crm/kb-crm/brands/l5he9esebibwi9j0tdec.jpg",
+      "public_id": "kb-crm/kb-crm/brands/l5he9esebibwi9j0tdec"
+    },
+    "description": "",
+    "is_active": true,
+    "createdAt": "2026-02-06T09:49:37.547Z",
+    "updatedAt": "2026-02-06T09:49:37.547Z",
+    "brand_id": "BRD-003",
+    "__v": 0
+  },
+  {
+    "_id": "6992b246b2119c60dc51bda5",
+    "name": "Brand h",
+    "description": "",
+    "website": "",
+    "is_active": true,
+    "createdAt": "2026-02-16T05:59:34.329Z",
+    "updatedAt": "2026-02-16T05:59:34.329Z",
+    "brand_id": "BRD-004",
+    "__v": 0
+  }
+]

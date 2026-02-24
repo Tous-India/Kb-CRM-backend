@@ -1,0 +1,86 @@
+[
+  {
+    "_id": "6981ceb14079a3adb75b3f1d",
+    "name": "Engine Parts",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-03T10:32:17.599Z",
+    "updatedAt": "2026-02-20T10:04:20.136Z",
+    "category_id": "CAT-001",
+    "__v": 0
+  },
+  {
+    "_id": "6985b9011a7b1df6cf186691",
+    "name": "Hardware",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-06T09:48:49.620Z",
+    "updatedAt": "2026-02-20T10:04:28.390Z",
+    "category_id": "CAT-002",
+    "__v": 0
+  },
+  {
+    "_id": "6985b9091a7b1df6cf186696",
+    "name": "Hoses & Fittings",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-06T09:48:57.272Z",
+    "updatedAt": "2026-02-20T10:04:36.073Z",
+    "category_id": "CAT-003",
+    "__v": 0
+  },
+  {
+    "_id": "6992b235b2119c60dc51bd9c",
+    "name": "Fuel System",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-16T05:59:17.853Z",
+    "updatedAt": "2026-02-20T10:04:43.853Z",
+    "category_id": "CAT-004",
+    "__v": 0
+  },
+  {
+    "_id": "699831d87d353e3614dc523e",
+    "name": "Ignition",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-20T10:05:12.465Z",
+    "updatedAt": "2026-02-20T10:05:12.465Z",
+    "category_id": "CAT-005",
+    "__v": 0
+  },
+  {
+    "_id": "699831e07d353e3614dc524f",
+    "name": "Electrical",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-20T10:05:20.896Z",
+    "updatedAt": "2026-02-20T10:05:20.896Z",
+    "category_id": "CAT-006",
+    "__v": 0
+  },
+  {
+    "_id": "699831e87d353e3614dc5254",
+    "name": "Tires & Wheels",
+    "description": "",
+    "display_order": 0,
+    "is_active": true,
+    "sub_categories": [],
+    "createdAt": "2026-02-20T10:05:28.203Z",
+    "updatedAt": "2026-02-20T10:05:28.203Z",
+    "category_id": "CAT-007",
+    "__v": 0
+  }
+]

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const { Schema } = mongoose;
 
@@ -27,6 +27,35 @@ const CompanyDetailsSchema = new Schema(
     tax_id: String,
     phone: String,
     billing_email: String,
+  },
+  { _id: false }
+);
+
+/**
+ * Credit Information (for BUYER)
+ */
+const CreditInfoSchema = new Schema(
+  {
+    payment_terms: {
+      type: String,
+      default: "WIRE TRANSFER",
+    },
+    credit_days: {
+      type: Number,
+      default: 0,
+    },
+    discount_code: {
+      type: String,
+      default: "",
+    },
+    credit_limit: {
+      type: Number,
+      default: 0,
+    },
+    credit_used: {
+      type: Number,
+      default: 0,
+    },
   },
   { _id: false }
 );
@@ -76,6 +105,14 @@ const UserSchema = new Schema(
       type: String,
     },
 
+    fax: {
+      type: String,
+    },
+
+    website: {
+      type: String,
+    },
+
     address: AddressSchema,
 
     /**
@@ -105,6 +142,11 @@ const UserSchema = new Schema(
     company_details: CompanyDetailsSchema,
 
     /**
+     * Credit Information (for BUYER)
+     */
+    credit_info: CreditInfoSchema,
+
+    /**
      * Active orders for quick access
      * Full order history is queried from the Orders collection
      */
@@ -128,10 +170,44 @@ const UserSchema = new Schema(
     },
 
     /**
-     * Password reset fields
+     * Password reset fields (legacy - token based)
      */
     passwordResetToken: String,
     passwordResetExpires: Date,
+
+    /**
+     * Email verification (for registration)
+     */
+    email_verified: {
+      type: Boolean,
+      default: false,
+    },
+    email_otp: String,
+    email_otp_expires: Date,
+
+    /**
+     * Password reset OTP fields
+     */
+    password_reset_otp: String,
+    password_reset_otp_expires: Date,
+
+    /**
+     * Registration approval (for BUYER)
+     * PENDING - waiting for admin approval
+     * APPROVED - approved by admin, can login
+     * REJECTED - rejected by admin
+     */
+    approval_status: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "APPROVED", // Admins are auto-approved, buyers start as PENDING during registration
+    },
+    approval_date: Date,
+    approved_by: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    rejection_reason: String,
   },
   {
     timestamps: true, // adds createdAt & updatedAt

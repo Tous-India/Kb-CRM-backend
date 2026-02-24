@@ -1,0 +1,85 @@
+{
+  "database": "kb_crm",
+  "exportedAt": "2026-02-23T06:40:28.385Z",
+  "mongodbUri": "mongodb://localhost:27017/kb_crm",
+  "totalCollections": 19,
+  "totalDocuments": 279,
+  "collections": [
+    {
+      "name": "statements",
+      "count": 0
+    },
+    {
+      "name": "orders",
+      "count": 15
+    },
+    {
+      "name": "quotations",
+      "count": 13
+    },
+    {
+      "name": "purchaseorders",
+      "count": 0
+    },
+    {
+      "name": "suppliers",
+      "count": 2
+    },
+    {
+      "name": "proformainvoices",
+      "count": 7
+    },
+    {
+      "name": "dispatches",
+      "count": 19
+    },
+    {
+      "name": "payments",
+      "count": 0
+    },
+    {
+      "name": "supplierorders",
+      "count": 0
+    },
+    {
+      "name": "settings",
+      "count": 0
+    },
+    {
+      "name": "categories",
+      "count": 7
+    },
+    {
+      "name": "archives",
+      "count": 0
+    },
+    {
+      "name": "products",
+      "count": 159
+    },
+    {
+      "name": "piallocations",
+      "count": 6
+    },
+    {
+      "name": "paymentrecords",
+      "count": 13
+    },
+    {
+      "name": "users",
+      "count": 9
+    },
+    {
+      "name": "carts",
+      "count": 2
+    },
+    {
+      "name": "brands",
+      "count": 4
+    },
+    {
+      "name": "invoices",
+      "count": 23
+    }
+  ]
+}

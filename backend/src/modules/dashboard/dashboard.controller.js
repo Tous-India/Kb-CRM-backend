@@ -5,6 +5,8 @@ import Product from "../products/products.model.js";
 import User from "../users/users.model.js";
 import PurchaseOrder from "../purchaseOrders/purchaseOrders.model.js";
 import Quotation from "../quotations/quotations.model.js";
+import ProformaInvoice from "../proformaInvoices/proformaInvoices.model.js";
+import PaymentRecord from "../paymentRecords/paymentRecords.model.js";
 import catchAsync from "../../utils/catchAsync.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import { ROLES } from "../../constants/index.js";
@@ -284,4 +286,156 @@ export const getRevenueByMonth = catchAsync(async (req, res) => {
   });
 
   return ApiResponse.success(res, { year, months }, "Revenue by month fetched");
+});
+
+// ===========================
+// GET /api/dashboard/buyer-stats
+// ===========================
+// Dashboard stats for logged-in buyer
+export const getBuyerStats = catchAsync(async (req, res) => {
+  const buyerId = req.user._id;
+
+  // Fetch all stats in parallel
+  const [
+    pendingQuotations,
+    openOrders,
+    totalInvoicesData,
+    recentOrders,
+    pendingPIs,
+    buyerInfo,
+  ] = await Promise.all([
+    // Pending quotations sent to this buyer
+    Quotation.countDocuments({
+      buyer: buyerId,
+      status: { $in: ["SENT", "PENDING"] },
+    }),
+
+    // Open orders for this buyer
+    Order.countDocuments({
+      buyer: buyerId,
+      status: { $in: ["OPEN", "PROCESSING", "PENDING", "QUOTED"] },
+    }),
+
+    // Total invoice amount for this buyer
+    Invoice.aggregate([
+      { $match: { buyer: buyerId } },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$total_amount" },
+          count: { $sum: 1 },
+          unpaidAmount: {
+            $sum: {
+              $cond: [
+                { $in: ["$status", ["UNPAID", "PARTIAL", "OVERDUE"]] },
+                "$balance_due",
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]),
+
+    // Recent orders for this buyer
+    Order.find({ buyer: buyerId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select(
+        "order_id po_number status payment_status total_amount total_quantity dispatched_quantity createdAt items"
+      ),
+
+    // Pending Proforma Invoices (requiring payment)
+    ProformaInvoice.countDocuments({
+      buyer: buyerId,
+      status: { $in: ["SENT", "PENDING"] },
+    }),
+
+    // Get buyer info with credit details
+    User.findById(buyerId).select("credit_info company_details user_id"),
+  ]);
+
+  const invoiceStats =
+    totalInvoicesData.length > 0
+      ? totalInvoicesData[0]
+      : { totalAmount: 0, count: 0, unpaidAmount: 0 };
+
+  // Format recent orders
+  const formattedOrders = recentOrders.map((order) => ({
+    order_id: order.order_id,
+    po_number: order.po_number || "-",
+    date: order.createdAt,
+    status: order.status,
+    payment_status: order.payment_status,
+    total_amount: order.total_amount || 0,
+    total_items: order.items?.length || 0,
+    total_quantity: order.total_quantity || 0,
+    dispatched_quantity: order.dispatched_quantity || 0,
+    remaining_quantity:
+      (order.total_quantity || 0) - (order.dispatched_quantity || 0),
+  }));
+
+  return ApiResponse.success(
+    res,
+    {
+      stats: {
+        pendingQuotations,
+        openOrders,
+        pendingPIs,
+        totalInvoices: invoiceStats.count,
+        totalInvoiceAmount: invoiceStats.totalAmount,
+        unpaidAmount: invoiceStats.unpaidAmount,
+      },
+      creditInfo: buyerInfo?.credit_info || {
+        payment_terms: "WIRE TRANSFER",
+        credit_days: 0,
+        discount_code: "",
+        credit_limit: 0,
+        credit_used: 0,
+      },
+      customerId: buyerInfo?.user_id || "N/A",
+      recentOrders: formattedOrders,
+    },
+    "Buyer dashboard stats fetched"
+  );
+});
+
+// ===========================
+// GET /api/dashboard/buyer-recent-orders
+// ===========================
+// Recent orders for logged-in buyer with more details
+export const getBuyerRecentOrders = catchAsync(async (req, res) => {
+  const buyerId = req.user._id;
+  const limit = Number(req.query.limit) || 10;
+
+  const orders = await Order.find({ buyer: buyerId })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .select(
+      "order_id po_number status payment_status total_amount total_quantity dispatched_quantity pending_quantity createdAt items"
+    );
+
+  const formattedOrders = orders.map((order) => {
+    const totalQty = order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+    const deliveredQty = order.dispatched_quantity || 0;
+
+    return {
+      order_id: order.order_id,
+      po_number: order.po_number || "-",
+      date: order.createdAt,
+      status: order.status,
+      payment_status: order.payment_status,
+      total_amount: order.total_amount || 0,
+      total_items: order.items?.length || 0,
+      total_quantity: totalQty,
+      delivered: deliveredQty,
+      remaining: totalQty - deliveredQty,
+    };
+  });
+
+  return ApiResponse.success(
+    res,
+    { orders: formattedOrders },
+    "Buyer recent orders fetched"
+  );
 });

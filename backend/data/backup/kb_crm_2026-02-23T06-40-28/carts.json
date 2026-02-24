@@ -1,0 +1,27 @@
+[
+  {
+    "_id": "6982cd044563a2d65a1de908",
+    "user": "697c8181cfce2ea769e5772a",
+    "items": [
+      {
+        "product": "6981d1074079a3adb75b3f31",
+        "part_number": "123555",
+        "product_name": "product 1",
+        "quantity": 2,
+        "_id": "6982ce7c4563a2d65a1de978",
+        "added_at": "2026-02-04T04:43:40.615Z"
+      }
+    ],
+    "createdAt": "2026-02-04T04:37:24.947Z",
+    "updatedAt": "2026-02-04T04:43:40.615Z",
+    "__v": 2
+  },
+  {
+    "_id": "6982ce334563a2d65a1de96a",
+    "user": "697c819dd698d318fe3cebd7",
+    "items": [],
+    "createdAt": "2026-02-04T04:42:27.185Z",
+    "updatedAt": "2026-02-04T05:15:35.141Z",
+    "__v": 5
+  }
+]

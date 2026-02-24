@@ -45,6 +45,18 @@ if (config.isDev) {
 }
 
 // ===========================
+// Health Check / Root Route
+// ===========================
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "KB CRM API is running",
+    version: "1.0.0",
+    endpoints: "/api/*",
+  });
+});
+
+// ===========================
 // API Routes
 // ===========================
 app.use("/api", routes);

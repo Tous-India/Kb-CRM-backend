@@ -1,0 +1,284 @@
+{
+  "archives": [
+    {
+      "document_type": "INVOICE",
+      "original_reference": "LEGACY-INV-001",
+      "document_date": "2024-01-15",
+      "fiscal_year": "FY2023-24",
+      "buyer_name": "Sample Buyer",
+      "buyer_company": "Aviation Parts Co.",
+      "buyer_email": "buyer@aviationparts.com",
+      "currency": "INR",
+      "total_amount": 776312.65,
+      "payment_status": "PAID",
+      "items": [
+        {
+          "sn": 1,
+          "part_number": "05K21104",
+          "product_name": "Cylinder Kit",
+          "quantity": 4,
+          "unit_price": 183550.85,
+          "total_price": 734203.40
+        },
+        {
+          "sn": 2,
+          "part_number": "75439-1",
+          "product_name": "Gasket & Seal Kit",
+          "quantity": 0,
+          "unit_price": 28257.88,
+          "total_price": 0
+        },
+        {
+          "sn": 3,
+          "part_number": "18A26093",
+          "product_name": "Crankshaft Bearing (Front)",
+          "quantity": 0,
+          "unit_price": 20593.51,
+          "total_price": 0
+        },
+        {
+          "sn": 4,
+          "part_number": "18D26098",
+          "product_name": "Crankshaft Bearing",
+          "quantity": 4,
+          "unit_price": 9043.24,
+          "total_price": 36172.95
+        },
+        {
+          "sn": 5,
+          "part_number": "LW-18085",
+          "product_name": "Spring Oil Pressure Relief Valve",
+          "quantity": 0,
+          "unit_price": 4835.00,
+          "total_price": 0
+        },
+        {
+          "sn": 6,
+          "part_number": "1028-B",
+          "product_name": "Ball",
+          "quantity": 0,
+          "unit_price": 537.22,
+          "total_price": 0
+        },
+        {
+          "sn": 7,
+          "part_number": "STD2246",
+          "product_name": "Bolt",
+          "quantity": 0,
+          "unit_price": 2202.61,
+          "total_price": 0
+        },
+        {
+          "sn": 8,
+          "part_number": "STD2231",
+          "product_name": "Ring Internal Retaining",
+          "quantity": 0,
+          "unit_price": 134.31,
+          "total_price": 0
+        },
+        {
+          "sn": 9,
+          "part_number": "LW18667",
+          "product_name": "Pin",
+          "quantity": 0,
+          "unit_price": 5784.09,
+          "total_price": 0
+        },
+        {
+          "sn": 10,
+          "part_number": "18M26105",
+          "product_name": "Connecting Rod Bushing",
+          "quantity": 0,
+          "unit_price": 3909.19,
+          "total_price": 0
+        },
+        {
+          "sn": 11,
+          "part_number": "75061",
+          "product_name": "Connecting Rod Bolt",
+          "quantity": 0,
+          "unit_price": 6533.51,
+          "total_price": 0
+        },
+        {
+          "sn": 12,
+          "part_number": "LW12186",
+          "product_name": "Connecting Rod Nut",
+          "quantity": 10,
+          "unit_price": 593.63,
+          "total_price": 5936.30
+        },
+        {
+          "sn": 13,
+          "part_number": "01K28983",
+          "product_name": "Connecting Rod Bushing",
+          "quantity": 0,
+          "unit_price": 1163.98,
+          "total_price": 0
+        },
+        {
+          "sn": 14,
+          "part_number": "LW13790",
+          "product_name": "Shaft Valve Rocker",
+          "quantity": 0,
+          "unit_price": 3581.48,
+          "total_price": 0
+        },
+        {
+          "sn": 15,
+          "part_number": "LW12892",
+          "product_name": "Thrust Button Rocker Shaft",
+          "quantity": 0,
+          "unit_price": 492.45,
+          "total_price": 0
+        },
+        {
+          "sn": 16,
+          "part_number": "74637",
+          "product_name": "Bushing Valve Rocker",
+          "quantity": 0,
+          "unit_price": 1808.65,
+          "total_price": 0
+        },
+        {
+          "sn": 17,
+          "part_number": "69603",
+          "product_name": "Hose",
+          "quantity": 0,
+          "unit_price": 1119.21,
+          "total_price": 0
+        },
+        {
+          "sn": 18,
+          "part_number": "STD1821",
+          "product_name": "Hose",
+          "quantity": 0,
+          "unit_price": 313.38,
+          "total_price": 0
+        },
+        {
+          "sn": 19,
+          "part_number": "STD160",
+          "product_name": "Washer",
+          "quantity": 0,
+          "unit_price": 107.44,
+          "total_price": 0
+        },
+        {
+          "sn": 20,
+          "part_number": "STD8",
+          "product_name": "Washer",
+          "quantity": 0,
+          "unit_price": 179.07,
+          "total_price": 0
+        },
+        {
+          "sn": 21,
+          "part_number": "STD1411",
+          "product_name": "Nut",
+          "quantity": 0,
+          "unit_price": 246.23,
+          "total_price": 0
+        },
+        {
+          "sn": 22,
+          "part_number": "53E22144",
+          "product_name": "Valve Assy. Temp. Control",
+          "quantity": 0,
+          "unit_price": 33279.11,
+          "total_price": 0
+        },
+        {
+          "sn": 23,
+          "part_number": "15B26066",
+          "product_name": "Plunger Assy",
+          "quantity": 0,
+          "unit_price": 8581.23,
+          "total_price": 0
+        },
+        {
+          "sn": 24,
+          "part_number": "63B28207",
+          "product_name": "Manifold Assembly (New)",
+          "quantity": 0,
+          "unit_price": 217950.97,
+          "total_price": 0
+        },
+        {
+          "sn": 25,
+          "part_number": "63C26450",
+          "product_name": "Nozzles",
+          "quantity": 0,
+          "unit_price": 31871.59,
+          "total_price": 0
+        },
+        {
+          "sn": 26,
+          "part_number": "LW-15473/62B26931",
+          "product_name": "EDP -NEW",
+          "quantity": 0,
+          "unit_price": 74315.71,
+          "total_price": 0
+        },
+        {
+          "sn": 27,
+          "part_number": "REM38E",
+          "product_name": "Spark Plug",
+          "quantity": 0,
+          "unit_price": 3312.87,
+          "total_price": 0
+        },
+        {
+          "sn": 28,
+          "part_number": "M2513R/67P20409",
+          "product_name": "Ignition Harness (LH)",
+          "quantity": 0,
+          "unit_price": 52826.83,
+          "total_price": 0
+        },
+        {
+          "sn": 29,
+          "part_number": "M2512R/67P20408",
+          "product_name": "Ignition Harness (RH)",
+          "quantity": 0,
+          "unit_price": 52826.83,
+          "total_price": 0
+        },
+        {
+          "sn": 30,
+          "part_number": "RSA-5AD1/2576536-2-H",
+          "product_name": "Fuel Injector New",
+          "quantity": 0,
+          "unit_price": 311320.15,
+          "total_price": 0
+        },
+        {
+          "sn": 31,
+          "part_number": "LRT23381",
+          "product_name": "Tappet Body",
+          "quantity": 0,
+          "unit_price": 47986.46,
+          "total_price": 0
+        },
+        {
+          "sn": 32,
+          "part_number": "149 NL/EC",
+          "product_name": "Starter (Upfront Purchase)",
+          "quantity": 0,
+          "unit_price": 131977.54,
+          "total_price": 0
+        },
+        {
+          "sn": 33,
+          "part_number": "606C41-6",
+          "product_name": "Tire",
+          "quantity": 0,
+          "unit_price": 14527.38,
+          "total_price": 0
+        }
+      ],
+      "notes": "Legacy invoice imported from old system. Total ordered: 18, Total delivered: 18",
+      "tags": ["legacy", "2024", "aviation-parts"]
+    }
+  ]
+}

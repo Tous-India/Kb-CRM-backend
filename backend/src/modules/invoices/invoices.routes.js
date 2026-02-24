@@ -25,6 +25,9 @@ router.put("/:id/items", checkPermission("manage_invoices"), controller.updateIt
 router.delete("/:id", checkPermission("manage_invoices"), controller.remove);
 router.post("/:id/duplicate", checkPermission("manage_invoices"), controller.duplicate);
 
+// Admin action - Send email
+router.post("/:id/send-email", checkPermission("manage_invoices"), controller.sendEmail);
+
 // Shared — buyer sees own, admin sees any
 router.get("/by-pi/:piId", controller.getByPI);
 router.get("/:id", controller.getById);

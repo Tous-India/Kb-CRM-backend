@@ -76,8 +76,15 @@ export const bulkSave = catchAsync(async (req, res) => {
     throw new AppError("Allocations array is required", 400);
   }
 
+  // First, delete existing allocations for this PI to avoid duplicates
+  const piIds = [...new Set(allocations.map(a => a.proforma_invoice).filter(Boolean))];
+  if (piIds.length > 0) {
+    await PIAllocation.deleteMany({ proforma_invoice: { $in: piIds } });
+  }
+
+  // Then insert all new allocations
   const result = await PIAllocation.insertMany(allocations);
-  return ApiResponse.created(res, { allocations: result }, "Allocations saved");
+  return ApiResponse.created(res, { allocations: result, saved: result.length }, "Allocations saved");
 });
 
 // ===========================

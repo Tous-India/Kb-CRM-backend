@@ -36,15 +36,11 @@ const findProductById = async (id) => {
 // GET /api/products
 // ===========================
 // Public — buyers see no pricing, admins see everything
-// Supports: ?page, ?limit, ?category, ?brand, ?stock_status, ?all=true
+// Supports: ?page, ?limit, ?category, ?brand, ?stock_status
 export const getAll = catchAsync(async (req, res) => {
-  const { page = 1, limit = 20, category, brand, stock_status, all } = req.query;
+  const { page = 1, limit = 20, category, brand, stock_status } = req.query;
 
   const filter = {};
-
-  if (all !== "true") {
-    filter.is_active = true;
-  }
 
   if (category) filter.category = category;
   if (brand) filter.brand = brand;
@@ -75,7 +71,6 @@ export const search = catchAsync(async (req, res) => {
 
   const regex = new RegExp(q, "i");
   const filter = {
-    is_active: true,
     $or: [
       { product_name: regex },
       { part_number: regex },
@@ -104,7 +99,6 @@ export const getByCategory = catchAsync(async (req, res) => {
 
   const products = await Product.find({
     category: categoryName,
-    is_active: true,
   }).sort({ createdAt: -1 });
 
   const data = isAdmin(req) ? products : products.map(stripPricing);
@@ -120,7 +114,6 @@ export const getByBrand = catchAsync(async (req, res) => {
 
   const products = await Product.find({
     brand: brandName,
-    is_active: true,
   }).sort({ createdAt: -1 });
 
   const data = isAdmin(req) ? products : products.map(stripPricing);
@@ -165,9 +158,13 @@ export const create = catchAsync(async (req, res) => {
     throw new AppError("Part number and product name are required", 400);
   }
 
+  // Use defaults if category/brand are empty or not provided
+  const productCategory = category && category.trim() ? category : "Uncategorized";
+  const productBrand = brand && brand.trim() ? brand : "No Brand";
+
   const product = await Product.create({
-    part_number, oem_part, product_name, category, sub_category,
-    brand, description, list_price, your_price, discount_percentage,
+    part_number, oem_part, product_name, category: productCategory, sub_category,
+    brand: productBrand, description, list_price, your_price, discount_percentage,
     stock_status, available_locations, total_quantity,
     specifications, manufacturer,
   });
@@ -228,8 +225,8 @@ export const update = catchAsync(async (req, res) => {
 
   // Update other fields
   const fields = [
-    "part_number", "oem_part", "product_name", "category", "sub_category",
-    "brand", "description", "list_price", "your_price", "discount_percentage",
+    "part_number", "oem_part", "product_name", "sub_category",
+    "description", "list_price", "your_price", "discount_percentage",
     "stock_status", "available_locations", "total_quantity",
     "specifications", "manufacturer", "is_active",
   ];
@@ -240,6 +237,14 @@ export const update = catchAsync(async (req, res) => {
     }
   });
 
+  // Handle category and brand with defaults for empty values
+  if (req.body.category !== undefined) {
+    product.category = req.body.category && req.body.category.trim() ? req.body.category : "Uncategorized";
+  }
+  if (req.body.brand !== undefined) {
+    product.brand = req.body.brand && req.body.brand.trim() ? req.body.brand : "No Brand";
+  }
+
   await product.save();
 
   return ApiResponse.success(res, { product }, "Product updated successfully");
@@ -248,7 +253,7 @@ export const update = catchAsync(async (req, res) => {
 // ===========================
 // DELETE /api/products/:id
 // ===========================
-// Admin only — soft delete
+// Admin only — hard delete (permanently removes from database)
 export const remove = catchAsync(async (req, res) => {
   const { id } = req.params;
 
@@ -258,8 +263,30 @@ export const remove = catchAsync(async (req, res) => {
     throw new AppError("Product not found", 404);
   }
 
-  product.is_active = false;
-  await product.save();
+  // Delete images from Cloudinary if they exist
+  if (product.image?.public_id) {
+    try {
+      await deleteFromCloudinary(product.image.public_id);
+    } catch (err) {
+      console.error("Failed to delete main image from Cloudinary:", err);
+    }
+  }
+
+  // Delete additional images from Cloudinary
+  if (product.additional_images?.length > 0) {
+    for (const img of product.additional_images) {
+      if (img.public_id) {
+        try {
+          await deleteFromCloudinary(img.public_id);
+        } catch (err) {
+          console.error("Failed to delete additional image from Cloudinary:", err);
+        }
+      }
+    }
+  }
+
+  // Permanently delete from database
+  await Product.deleteOne({ _id: product._id });
 
   return ApiResponse.success(res, null, "Product deleted successfully");
 });

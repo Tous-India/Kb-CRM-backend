@@ -64,6 +64,7 @@ const ProductSchema = new Schema(
     category: {
       type: String,
       index: true,
+      default: "Uncategorized",
     },
 
     sub_category: String,
@@ -71,6 +72,7 @@ const ProductSchema = new Schema(
     brand: {
       type: String,
       index: true,
+      default: "No Brand",
     },
 
     description: String,

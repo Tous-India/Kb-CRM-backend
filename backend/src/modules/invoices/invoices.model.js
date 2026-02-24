@@ -254,8 +254,9 @@ const InvoiceSchema = new Schema(
     buyer: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
       index: true,
+      // Note: Not required - invoice can be created with just buyer_name/buyer_email
+      // when PI/Order was created before buyer was linked
     },
     buyer_name: String,
     buyer_email: String,

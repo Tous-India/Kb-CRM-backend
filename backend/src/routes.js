@@ -30,6 +30,9 @@ import supplierOrderRoutes from "./modules/supplierOrders/supplierOrders.routes.
 // Dispatch Module
 import dispatchRoutes from "./modules/dispatches/dispatches.routes.js";
 
+// Archive Module
+import archiveRoutes from "./modules/archives/archives.routes.js";
+
 const router = Router();
 
 // ===========================
@@ -72,5 +75,8 @@ router.use("/supplier-orders", supplierOrderRoutes);
 
 // Dispatch Routes
 router.use("/dispatches", dispatchRoutes);
+
+// Archive Routes
+router.use("/archives", archiveRoutes);
 
 export default router;

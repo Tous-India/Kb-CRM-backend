@@ -5,6 +5,7 @@ import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
 import { ROLES } from "../../constants/index.js";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js";
+import { sendAdminPaymentSubmittedEmail } from "../../utils/emailService.js";
 
 // ===========================
 // GET /api/payment-records
@@ -177,6 +178,22 @@ export const create = catchAsync(async (req, res) => {
     proof_file_url,
     status: "PENDING",
   });
+
+  // Send email notification to admin
+  try {
+    await sendAdminPaymentSubmittedEmail(
+      record,
+      pi,
+      {
+        name: req.user.name,
+        email: req.user.email,
+        company_name: req.user.company_name || pi.buyer_name,
+      }
+    );
+  } catch (emailError) {
+    console.error("[PaymentRecords] Admin notification email failed:", emailError.message);
+    // Don't fail the request if email fails
+  }
 
   return ApiResponse.created(res, { record }, "Payment record submitted for verification");
 });

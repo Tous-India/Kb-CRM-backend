@@ -6,6 +6,7 @@ import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
 import { ROLES } from "../../constants/index.js";
 import { generateInvoicePDF } from "../../utils/pdfGenerator.js";
+import { sendInvoiceEmail } from "../../utils/emailService.js";
 
 // Helper function to convert number to words (INR)
 const numberToWordsINR = (num) => {
@@ -75,7 +76,13 @@ export const getAll = catchAsync(async (req, res) => {
 export const getMyInvoices = catchAsync(async (req, res) => {
   const { status, page = 1, limit = 20 } = req.query;
 
-  const filter = { buyer: req.user._id };
+  // Match by buyer ID or by buyer_email (for invoices created before buyer was linked)
+  const filter = {
+    $or: [
+      { buyer: req.user._id },
+      { buyer_email: req.user.email },
+    ],
+  };
   if (status) filter.status = status;
 
   const skip = (Number(page) - 1) * Number(limit);
@@ -83,6 +90,7 @@ export const getMyInvoices = catchAsync(async (req, res) => {
   const [invoices, total] = await Promise.all([
     Invoice.find(filter)
       .populate("order", "order_id title")
+      .populate("proforma_invoice", "proforma_number")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit)),
@@ -246,13 +254,9 @@ export const createManual = catchAsync(async (req, res) => {
     throw new AppError("Buyer ID is required", 400);
   }
 
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    throw new AppError("At least one item is required", 400);
-  }
-
-  // Calculate subtotal from items
+  // Calculate subtotal from items (items are optional for manual invoices)
   let subtotal = 0;
-  const invoiceItems = items.map((item, index) => {
+  const invoiceItems = (items || []).map((item, index) => {
     const totalPrice = item.quantity * item.unit_price;
     subtotal += totalPrice;
     return {
@@ -570,16 +574,12 @@ export const updateItems = catchAsync(async (req, res) => {
     throw new AppError("Invoice not found", 404);
   }
 
-  if (!items || !Array.isArray(items)) {
-    throw new AppError("Items array is required", 400);
-  }
-
-  // Update items
+  // Update items (items are optional for manual invoices)
   let subtotal = 0;
   let allDelivered = true;
   let anyDelivered = false;
 
-  invoice.items = items.map((item, index) => {
+  invoice.items = (items || []).map((item, index) => {
     const totalPrice = item.quantity * item.unit_price;
     subtotal += totalPrice;
 
@@ -873,4 +873,58 @@ export const duplicate = catchAsync(async (req, res) => {
   await newInvoice.populate("buyer", "name email user_id");
 
   return ApiResponse.created(res, { invoice: newInvoice }, "Invoice duplicated");
+});
+
+// ===========================
+// POST /api/invoices/:id/send-email
+// ===========================
+// Admin only — send invoice via email to buyer
+export const sendEmail = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { recipientEmail, customMessage } = req.body;
+
+  const invoice = await Invoice.findById(id)
+    .populate("buyer", "name email user_id");
+
+  if (!invoice) {
+    throw new AppError("Invoice not found", 404);
+  }
+
+  // Determine recipient email
+  const emailTo = recipientEmail || invoice.buyer_email || invoice.bill_to?.email || invoice.buyer?.email;
+
+  if (!emailTo) {
+    throw new AppError("No recipient email address available", 400);
+  }
+
+  // Generate PDF
+  let pdfBuffer = null;
+  try {
+    pdfBuffer = await generateInvoicePDF(invoice.toObject());
+  } catch (pdfError) {
+    console.error("[InvoicesController] PDF generation failed:", pdfError.message);
+    // Continue without PDF attachment
+  }
+
+  // Send email
+  try {
+    await sendInvoiceEmail(invoice, emailTo, {
+      customMessage,
+      pdfBuffer,
+    });
+  } catch (emailError) {
+    console.error("[InvoicesController] Email send failed:", emailError.message);
+    throw new AppError(`Failed to send email: ${emailError.message}`, 500);
+  }
+
+  // Update invoice tracking
+  invoice.is_emailed = true;
+  invoice.last_emailed_at = new Date();
+  await invoice.save();
+
+  return ApiResponse.success(
+    res,
+    { invoice, emailSentTo: emailTo },
+    `Invoice sent successfully to ${emailTo}`
+  );
 });

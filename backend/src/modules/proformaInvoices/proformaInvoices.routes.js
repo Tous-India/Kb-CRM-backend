@@ -20,6 +20,12 @@ router.put("/:id/approve", checkPermission("manage_quotes"), controller.approve)
 router.put("/:id/reject", checkPermission("manage_quotes"), controller.reject);
 router.post("/:id/convert-to-order", checkPermission("manage_quotes"), controller.convertToOrder);
 
+// Admin action - Send email
+router.post("/:id/send-email", checkPermission("manage_quotes"), controller.sendEmail);
+
+// Admin action - Clone PI
+router.post("/:id/clone", checkPermission("manage_quotes"), controller.clone);
+
 // Shared — buyer sees own, admin sees any
 router.get("/:id", controller.getById);
 

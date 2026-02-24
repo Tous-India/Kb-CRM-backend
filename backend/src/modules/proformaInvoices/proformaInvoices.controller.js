@@ -5,6 +5,8 @@ import catchAsync from "../../utils/catchAsync.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
 import { ROLES } from "../../constants/index.js";
+import { sendProformaEmail } from "../../utils/emailService.js";
+import { generateQuotationPDF } from "../../utils/pdfGenerator.js";
 
 // ===========================
 // GET /api/proforma-invoices
@@ -269,6 +271,20 @@ export const update = catchAsync(async (req, res) => {
     subtotal,
     total_amount,
     exchange_rate,
+    currency,
+    // Additional charges
+    logistic_charges,
+    custom_duty,
+    bank_charges,
+    other_charges,
+    // Debit Note
+    debit_note,
+    debit_note_reason,
+    // Legacy charge field names (from frontend)
+    igst_18,
+    igst_28,
+    duty,
+    freight,
     // Payment tracking fields
     payment_received,
     payment_status,
@@ -309,6 +325,19 @@ export const update = catchAsync(async (req, res) => {
   if (subtotal !== undefined) proforma.subtotal = subtotal;
   if (total_amount !== undefined) proforma.total_amount = total_amount;
   if (exchange_rate !== undefined) proforma.exchange_rate = exchange_rate;
+  if (currency !== undefined) proforma.currency = currency;
+
+  // Update additional charges
+  if (logistic_charges !== undefined) proforma.logistic_charges = logistic_charges;
+  if (freight !== undefined) proforma.logistic_charges = freight; // Map freight to logistic_charges
+  if (custom_duty !== undefined) proforma.custom_duty = custom_duty;
+  if (duty !== undefined) proforma.custom_duty = duty; // Map duty to custom_duty
+  if (bank_charges !== undefined) proforma.bank_charges = bank_charges;
+  if (other_charges !== undefined) proforma.other_charges = other_charges;
+
+  // Update debit note
+  if (debit_note !== undefined) proforma.debit_note = debit_note;
+  if (debit_note_reason !== undefined) proforma.debit_note_reason = debit_note_reason;
 
   // Update payment tracking fields
   if (payment_received !== undefined) proforma.payment_received = payment_received;
@@ -554,5 +583,153 @@ export const getCompletedPIs = catchAsync(async (req, res) => {
     Number(limit),
     total,
     "Completed proforma invoices fetched"
+  );
+});
+
+// ===========================
+// POST /api/proforma-invoices/:id/send-email
+// ===========================
+// Admin only — send proforma invoice via email to buyer
+export const sendEmail = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { recipientEmail, customMessage } = req.body;
+
+  const proforma = await ProformaInvoice.findById(id)
+    .populate("buyer", "name email user_id")
+    .populate("quotation", "quote_number");
+
+  if (!proforma) {
+    throw new AppError("Proforma Invoice not found", 404);
+  }
+
+  // Determine recipient email
+  const emailTo = recipientEmail || proforma.buyer_email || proforma.buyer?.email;
+
+  if (!emailTo) {
+    throw new AppError("No recipient email address available", 400);
+  }
+
+  // Generate PDF
+  let pdfBuffer = null;
+  try {
+    pdfBuffer = await generateQuotationPDF(proforma.toObject());
+  } catch (pdfError) {
+    console.error("[ProformaController] PDF generation failed:", pdfError.message);
+    // Continue without PDF attachment
+  }
+
+  // Send email
+  try {
+    await sendProformaEmail(proforma, emailTo, {
+      customMessage,
+      pdfBuffer,
+    });
+  } catch (emailError) {
+    console.error("[ProformaController] Email send failed:", emailError.message);
+    throw new AppError(`Failed to send email: ${emailError.message}`, 500);
+  }
+
+  // Update proforma tracking
+  if (proforma.status === "PENDING") {
+    proforma.status = "SENT";
+  }
+  proforma.is_emailed = true;
+  proforma.last_emailed_at = new Date();
+  proforma.email_count = (proforma.email_count || 0) + 1;
+  await proforma.save();
+
+  return ApiResponse.success(
+    res,
+    { proforma, emailSentTo: emailTo },
+    `Proforma Invoice sent successfully to ${emailTo}`
+  );
+});
+
+// ===========================
+// POST /api/proforma-invoices/:id/clone
+// ===========================
+// Admin only — clone an existing proforma invoice
+export const clone = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const originalPI = await ProformaInvoice.findById(id)
+    .populate("buyer", "name email user_id")
+    .populate("quotation", "quote_number");
+
+  if (!originalPI) {
+    throw new AppError("Proforma Invoice not found", 404);
+  }
+
+  // Clone items with fresh copy
+  const clonedItems = originalPI.items.map((item) => ({
+    product_id: item.product_id,
+    product: item.product,
+    part_number: item.part_number,
+    product_name: item.product_name,
+    quantity: item.quantity,
+    unit_price: item.unit_price,
+    total_price: item.total_price,
+  }));
+
+  // Calculate new valid_until (30 days from now)
+  const newValidUntil = new Date();
+  newValidUntil.setDate(newValidUntil.getDate() + 30);
+
+  // Create cloned PI
+  const clonedPI = await ProformaInvoice.create({
+    // Keep reference to original quotation
+    quotation: originalPI.quotation?._id || originalPI.quotation,
+    quote_number: originalPI.quote_number,
+    // Keep buyer info
+    buyer: originalPI.buyer?._id || originalPI.buyer,
+    buyer_name: originalPI.buyer_name || originalPI.buyer?.name,
+    buyer_email: originalPI.buyer_email || originalPI.buyer?.email,
+    // Clone items and financial info
+    items: clonedItems,
+    exchange_rate: originalPI.exchange_rate,
+    payment_terms: originalPI.payment_terms,
+    delivery_terms: originalPI.delivery_terms,
+    subtotal: originalPI.subtotal,
+    logistic_charges: originalPI.logistic_charges || 0,
+    custom_duty: originalPI.custom_duty || 0,
+    bank_charges: originalPI.bank_charges || 0,
+    other_charges: originalPI.other_charges || 0,
+    total_amount: originalPI.total_amount,
+    // Clone addresses
+    billing_address: originalPI.billing_address,
+    shipping_address: originalPI.shipping_address,
+    // Clone notes/terms
+    notes: originalPI.notes,
+    // Fresh dates
+    valid_until: newValidUntil,
+    // Reset status
+    status: "PENDING",
+    // Reset payment (IMPORTANT: cloned PI starts with zero payment)
+    payment_received: 0,
+    payment_status: "UNPAID",
+    payment_history: [],
+    // Reset dispatch info
+    total_dispatched_quantity: 0,
+    dispatch_status: "NONE",
+    fully_dispatched: false,
+    invoice_generated: false,
+    // Reset email tracking
+    is_emailed: false,
+    email_count: 0,
+    // Clone reference
+    cloned_from: originalPI._id,
+    // Metadata
+    created_by: req.user._id,
+  });
+
+  // Populate for response
+  const populatedPI = await ProformaInvoice.findById(clonedPI._id)
+    .populate("buyer", "name email user_id")
+    .populate("quotation", "quote_number");
+
+  return ApiResponse.created(
+    res,
+    { proforma: populatedPI, cloned_from: originalPI.proforma_number },
+    `Proforma Invoice cloned successfully from ${originalPI.proforma_number}`
   );
 });

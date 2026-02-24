@@ -1,0 +1,70 @@
+[
+  {
+    "_id": "698f6c1ee80d29e8e4730f3c",
+    "supplier_code": "SUP-TEST-001",
+    "supplier_name": "Test Electronics Supplier",
+    "status": "ACTIVE",
+    "contact": {
+      "primary_name": "John Doe",
+      "email": "john@testsupplier.com",
+      "phone": "+1-555-1234"
+    },
+    "address": {
+      "street": "123 Tech Street",
+      "city": "New York",
+      "state": "NY",
+      "zip": "10001",
+      "country": "USA"
+    },
+    "business_info": {
+      "tax_id": "12-3456789"
+    },
+    "bank_details": {
+      "bank_name": "Chase Bank",
+      "account_name": "Test Electronics LLC",
+      "account_number": "123456789"
+    },
+    "products_supplied": [],
+    "performance": {
+      "total_orders": 0,
+      "total_value": 0,
+      "on_time_delivery_rate": 100,
+      "quality_rating": 5
+    },
+    "createdAt": "2026-02-13T18:23:26.651Z",
+    "updatedAt": "2026-02-13T18:23:26.651Z",
+    "supplier_id": "SUP-00001",
+    "__v": 0
+  },
+  {
+    "_id": "698f6d08e80d29e8e4730f4b",
+    "supplier_code": "SUP-IND-001",
+    "supplier_name": "India Tech Parts",
+    "status": "ACTIVE",
+    "contact": {
+      "primary_name": "Raj Patel",
+      "email": "raj@indiatech.com",
+      "phone": "+91-9876543210"
+    },
+    "address": {
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India"
+    },
+    "business_info": {
+      "gstin": "27AABCU9603R1ZM",
+      "pan": "AABCU9603R"
+    },
+    "products_supplied": [],
+    "performance": {
+      "total_orders": 0,
+      "total_value": 0,
+      "on_time_delivery_rate": 100,
+      "quality_rating": 5
+    },
+    "createdAt": "2026-02-13T18:27:20.495Z",
+    "updatedAt": "2026-02-13T18:27:20.495Z",
+    "supplier_id": "SUP-00002",
+    "__v": 0
+  }
+]

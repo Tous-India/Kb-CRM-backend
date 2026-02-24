@@ -13,6 +13,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.env.local
 
 # ===============================
 # Build / Dist
@@ -92,3 +93,30 @@ docker-data/
 # ===============================
 *.tgz
 *.tar.gz
+src/seeds/
+# ===============================
+# Secrets / Credentials (NEVER COMMIT)
+# ===============================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+secrets.json
+serviceAccountKey.json
+google-credentials.json
+firebase-adminsdk*.json
+
+# ===============================
+# Backup files
+# ===============================
+*.bak
+*.backup
+*-old.zip
+
+# ===============================
+# Jest / Testing
+# ===============================
+.jest/
+jest-results.json

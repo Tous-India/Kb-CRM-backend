@@ -221,7 +221,7 @@ Multer with memory storage (no disk writes):
 3. **Purchase order title** — Every PO requires a title (e.g. "Q1 Parts Restock"). Title carries over to the order.
 4. **Advance payment model** — Orders require payment before dispatch.
 5. **One cart per user** — Each buyer has a single cart (unique constraint on user field).
-6. **Soft delete pattern** — Resources are deactivated (`is_active: false`) instead of hard deleted.
+6. **Delete pattern** — Most resources use soft delete (`is_active: false`). Products use hard delete (permanent removal from database).
 
 ---
 
@@ -310,7 +310,7 @@ GET /api/health → { status: "success", message: "KB CRM API is running" }
 | GET | `/:id` | Public | Get product by ID |
 | POST | `/` | manage_products | Create product |
 | PUT | `/:id` | manage_products | Update product |
-| DELETE | `/:id` | manage_products | Soft delete product |
+| DELETE | `/:id` | manage_products | Hard delete product (permanent) |
 | PUT | `/:id/inventory` | manage_products | Update stock/locations |
 | POST | `/:id/images` | manage_products | Upload additional images (Cloudinary) |
 | PUT | `/:id/main-image` | manage_products | Update main image |
@@ -582,6 +582,121 @@ Server runs at `http://localhost:5000/api`
 | `start` | `node server.js` | Production server |
 | `dev` | `nodemon server.js` | Development with auto-reload |
 | `seed` | `node src/seeds/seedAdmin.js` | Create SUPER_ADMIN account |
+| `test` | `jest` | Run all tests |
+| `test:watch` | `jest --watch` | Run tests in watch mode |
+| `test:coverage` | `jest --coverage` | Run tests with coverage report |
+
+---
+
+## Testing
+
+### Test Setup
+
+Tests use **Jest** with **MongoDB Memory Server** for isolated database testing. No external MongoDB instance required.
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test file
+npm test -- tests/integration/auth.test.js
+
+# Run with verbose output
+npm test -- --verbose
+
+# Run with coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+```
+tests/
+├── setup.js                          # Jest setup with MongoDB Memory Server
+├── fixtures/                         # Test data fixtures
+│   ├── users.fixture.js              # Admin, buyer, sub-admin test data
+│   ├── products.fixture.js           # Product test data
+│   └── orders.fixture.js             # Order test data
+├── unit/                             # Unit tests
+│   ├── utils/                        # Utility function tests
+│   │   ├── AppError.test.js
+│   │   ├── apiResponse.test.js
+│   │   └── catchAsync.test.js
+│   └── models/                       # Model validation tests
+│       ├── User.test.js
+│       ├── Product.test.js
+│       ├── Order.test.js
+│       ├── Quotation.test.js
+│       ├── Invoice.test.js
+│       ├── ProformaInvoice.test.js
+│       ├── Dispatch.test.js
+│       ├── Cart.test.js
+│       └── Payment.test.js
+└── integration/                      # API integration tests
+    ├── auth.test.js
+    ├── users.test.js
+    ├── products.test.js
+    ├── orders.test.js
+    ├── quotations.test.js
+    ├── invoices.test.js
+    ├── carts.test.js
+    ├── categories.test.js
+    ├── brands.test.js
+    └── ... (all API modules)
+```
+
+### Current Test Status
+
+| Category | Tests | Status |
+|----------|-------|--------|
+| Unit Tests (Utils) | 26 | ✅ Passing |
+| Unit Tests (Models) | 290+ | ✅ Passing |
+| Integration Tests | 568+ | ⚠️ 95.5% Passing |
+| **Total** | **884+** | **95.5%** |
+
+### Known Test Issues
+
+See `tests/TEST_FAILURES_TO_FIX.md` for documentation of remaining test failures and their solutions.
+
+**Common issues:**
+- Email service calls in test environment (requires mocking)
+- Some integration tests need additional fixture setup
+
+### Writing Tests
+
+**Unit Test Example:**
+```javascript
+import AppError from '../../src/utils/AppError.js';
+
+describe('AppError', () => {
+  it('should create error with status code', () => {
+    const error = new AppError('Not found', 404);
+    expect(error.message).toBe('Not found');
+    expect(error.statusCode).toBe(404);
+  });
+});
+```
+
+**Integration Test Example:**
+```javascript
+import request from 'supertest';
+import app from '../../app.js';
+import User from '../../src/modules/users/users.model.js';
+import { validAdmin } from '../fixtures/users.fixture.js';
+
+describe('Auth API', () => {
+  it('should login with valid credentials', async () => {
+    await User.create(validAdmin);
+
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: validAdmin.email, password: validAdmin.password });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.token).toBeDefined();
+  });
+});
+```
 
 ---
 
@@ -647,7 +762,42 @@ Server runs at `http://localhost:5000/api`
 
 ## Recent Updates
 
-### Version 2.3 Features (Latest)
+### Version 2.4 Features (Latest)
+
+**Product Management Updates**
+1. **Hard Delete** - Products are permanently removed from database (no soft delete)
+2. **Cloudinary Cleanup** - Product images automatically deleted from Cloudinary on product deletion
+3. **Simplified Filtering** - Removed `is_active` field filtering from all product endpoints
+4. **Unified API** - Both admin and buyer see the same products from database
+5. **Bulk Insert Script** - `scripts/bulkInsertProducts.js` for bulk product import
+6. **Image Update Script** - `scripts/updateProductImages.js` for batch image updates
+
+**API Changes**
+```
+DELETE /api/products/:id
+  - Now permanently deletes product from database
+  - Deletes main image and all additional images from Cloudinary
+  - Returns 404 if product not found
+
+GET /api/products
+  - Returns ALL products (no is_active filtering)
+  - Admin sees pricing fields (list_price, your_price, discount_percentage)
+  - Buyers see products without pricing fields
+```
+
+**Scripts Added**
+```bash
+# Bulk insert products from JSON
+node scripts/bulkInsertProducts.js
+
+# Bulk update product images
+node scripts/updateProductImages.js
+
+# Check product status in database
+node scripts/checkProducts.js
+```
+
+### Version 2.3 Features
 
 **Payment Records Enhancement**
 1. **PI Exchange Rate** - Payment verification uses PI's stored exchange rate

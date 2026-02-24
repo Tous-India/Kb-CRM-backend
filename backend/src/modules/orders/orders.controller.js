@@ -5,6 +5,7 @@ import catchAsync from "../../utils/catchAsync.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
 import { ROLES } from "../../constants/index.js";
+import { sendAdminNewOrderEmail } from "../../utils/emailService.js";
 
 // ===========================
 // GET /api/orders
@@ -521,6 +522,19 @@ export const submitQuoteRequest = catchAsync(async (req, res) => {
     shipping: shipping || 0,
     total_amount: total_amount || 0,
   });
+
+  // Send email notification to admin
+  try {
+    await sendAdminNewOrderEmail(order, {
+      name: customer_name,
+      email: customer_email || req.user?.email,
+      company_name: customer_name,
+      phone: req.user?.phone,
+    });
+  } catch (emailError) {
+    console.error("[Orders] Admin notification email failed:", emailError.message);
+    // Don't fail the request if email fails
+  }
 
   return ApiResponse.created(res, { order }, "Quote request submitted successfully");
 });

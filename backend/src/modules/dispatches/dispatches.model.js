@@ -129,6 +129,17 @@ const DispatchSchema = new Schema(
     },
 
     notes: String,
+
+    // Email tracking
+    is_emailed: {
+      type: Boolean,
+      default: false,
+    },
+    last_emailed_at: Date,
+    email_count: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

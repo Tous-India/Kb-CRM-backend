@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import dns from "node:dns/promises";
 import dotenv from "dotenv";
 import User from "../modules/users/users.model.js";
 
@@ -8,6 +9,9 @@ const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/kb_crm";
 
 const seedAdmin = async () => {
   try {
+    // Set DNS servers to resolve MongoDB Atlas SRV records
+    dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
     await mongoose.connect(MONGO_URI);
     console.log("Connected to MongoDB");
 
@@ -23,7 +27,7 @@ const seedAdmin = async () => {
     // Create SUPER_ADMIN
     const admin = await User.create({
       name: "Super Admin",
-      email: "manawwar@gmail.com",
+      email: "kbenterprise5230@gmail.com",
       password: "admin123",
       phone: "9999999999",
       role: "SUPER_ADMIN",

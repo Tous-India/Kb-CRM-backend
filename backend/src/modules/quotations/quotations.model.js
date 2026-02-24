@@ -146,6 +146,17 @@ const QuotationSchema = new Schema(
 
     // Shipping address (provided by buyer on acceptance)
     shipping_address: AddressSchema,
+
+    // Email tracking
+    is_emailed: {
+      type: Boolean,
+      default: false,
+    },
+    last_emailed_at: Date,
+    email_count: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

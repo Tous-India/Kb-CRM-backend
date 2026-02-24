@@ -96,7 +96,14 @@ const ProformaInvoiceSchema = new Schema(
 
     valid_until: Date,
 
-    // Exchange rate at time of PI creation
+    // Currency and exchange rate
+    currency: {
+      type: String,
+      enum: ["USD", "INR", "EUR", "GBP"],
+      default: "USD",
+    },
+
+    // Exchange rate at time of PI creation (1 USD = X INR)
     exchange_rate: {
       type: Number,
       default: 83.5,
@@ -146,6 +153,16 @@ const ProformaInvoiceSchema = new Schema(
     other_charges: {
       type: Number,
       default: 0,
+    },
+
+    // Debit Note (deduction from total)
+    debit_note: {
+      type: Number,
+      default: 0,
+    },
+    debit_note_reason: {
+      type: String,
+      default: "",
     },
 
     total_amount: {
@@ -247,6 +264,17 @@ const ProformaInvoiceSchema = new Schema(
       ref: "Invoice",
     },
     invoice_number: String,
+
+    // Email tracking
+    is_emailed: {
+      type: Boolean,
+      default: false,
+    },
+    last_emailed_at: Date,
+    email_count: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

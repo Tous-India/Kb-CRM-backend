@@ -22,4 +22,7 @@ router.get("/summary/:sourceType/:sourceId", checkPermission("manage_dispatch"),
 router.get("/:id", checkPermission("manage_dispatch"), controller.getById);
 router.delete("/:id", checkPermission("manage_dispatch"), controller.remove);
 
+// Admin action - Send email
+router.post("/:id/send-email", checkPermission("manage_dispatch"), controller.sendEmail);
+
 export default router;
