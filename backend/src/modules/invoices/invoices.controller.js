@@ -183,6 +183,7 @@ export const createManual = catchAsync(async (req, res) => {
     buyer_name,
     buyer_email,
     invoice_type,
+    invoice_title,
     custom_invoice_number,
 
     // References
@@ -190,6 +191,7 @@ export const createManual = catchAsync(async (req, res) => {
     hsn_sac,
     awb_number,
     po_number,
+    proforma_invoice_number,
 
     // Company details (FROM)
     company_details,
@@ -305,6 +307,7 @@ export const createManual = catchAsync(async (req, res) => {
   const invoice = await Invoice.create({
     // Type and source
     invoice_type: invoice_type || "TAX_INVOICE",
+    invoice_title: invoice_title || "TAX INVOICE",
     source: "MANUAL",
     custom_invoice_number,
 
@@ -313,6 +316,7 @@ export const createManual = catchAsync(async (req, res) => {
     hsn_sac,
     awb_number,
     po_number,
+    proforma_invoice_number,
 
     // Company details
     company_details,
@@ -424,7 +428,7 @@ export const update = catchAsync(async (req, res) => {
   // List of updatable fields
   const updatableFields = [
     // Basic info
-    'invoice_type', 'custom_invoice_number',
+    'invoice_type', 'invoice_title', 'custom_invoice_number',
     // References
     'quote_reference', 'hsn_sac', 'awb_number', 'bol_number', 'po_number',
     // Company details

@@ -3,6 +3,8 @@ import Invoice from "../invoices/invoices.model.js";
 import Payment from "../payments/payments.model.js";
 import ProformaInvoice from "../proformaInvoices/proformaInvoices.model.js";
 import PaymentRecord from "../paymentRecords/paymentRecords.model.js";
+import PIAllocation from "../piAllocations/piAllocations.model.js";
+import SupplierOrder from "../supplierOrders/supplierOrders.model.js";
 import catchAsync from "../../utils/catchAsync.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import AppError from "../../utils/AppError.js";
@@ -428,4 +430,173 @@ export const downloadPdf = catchAsync(async (req, res) => {
   });
 
   return res.send(pdfBuffer);
+});
+
+// ===========================
+// GET /api/statements/profit-analysis
+// ===========================
+// Admin only — get order-wise profit analysis
+// Shows: amount_paid (what buyer paid), cost (what we pay to supplier), profit
+export const getProfitAnalysis = catchAsync(async (req, res) => {
+  // Fetch all invoices with their PI references including payment info
+  const invoices = await Invoice.find()
+    .populate("buyer", "name user_id")
+    .populate("proforma_invoice", "proforma_number payment_received")
+    .sort({ createdAt: -1 })
+    .select("invoice_number buyer buyer_name total_amount amount_paid balance_due status proforma_invoice proforma_invoice_number createdAt exchange_rate");
+
+  // Get all PI allocations (cost data) grouped by PI
+  const allocations = await PIAllocation.find()
+    .populate("supplier", "name")
+    .select("proforma_invoice part_number product_name quantity_total unit_cost total_cost status");
+
+  // Create a map of PI ObjectId to total cost
+  const piCostMap = new Map();
+  allocations.forEach((alloc) => {
+    const piId = alloc.proforma_invoice?.toString();
+    if (piId) {
+      const current = piCostMap.get(piId) || 0;
+      piCostMap.set(piId, current + (alloc.total_cost || 0));
+    }
+  });
+
+  // Build profit analysis for each invoice
+  const profitAnalysis = invoices.map((inv) => {
+    const invoiceTotal = inv.total_amount || 0;
+    // Get amount paid - from invoice or from linked PI
+    const amountPaid = inv.amount_paid || inv.proforma_invoice?.payment_received || 0;
+    const balanceDue = inv.balance_due || (invoiceTotal - amountPaid);
+    const piId = inv.proforma_invoice?._id?.toString() || inv.proforma_invoice?.toString();
+    const cost = piCostMap.get(piId) || 0;
+    // Profit = What buyer paid - What we pay to supplier
+    const profit = amountPaid - cost;
+    const profitMargin = amountPaid > 0 ? ((profit / amountPaid) * 100).toFixed(2) : 0;
+
+    return {
+      date: inv.createdAt,
+      invoice_number: inv.invoice_number,
+      buyer: inv.buyer,
+      buyer_name: inv.buyer_name || inv.buyer?.name,
+      proforma_number: inv.proforma_invoice_number || inv.proforma_invoice?.proforma_number,
+      invoice_total: invoiceTotal,
+      amount_paid: amountPaid,
+      balance_due: balanceDue,
+      cost,
+      profit,
+      profit_margin: Number(profitMargin),
+      payment_status: inv.status || (amountPaid >= invoiceTotal ? "PAID" : amountPaid > 0 ? "PARTIAL" : "UNPAID"),
+      exchange_rate: inv.exchange_rate || 1,
+    };
+  });
+
+  // Calculate totals
+  const totalInvoiced = profitAnalysis.reduce((sum, p) => sum + p.invoice_total, 0);
+  const totalPaid = profitAnalysis.reduce((sum, p) => sum + p.amount_paid, 0);
+  const totalCost = profitAnalysis.reduce((sum, p) => sum + p.cost, 0);
+  const totalProfit = totalPaid - totalCost;
+  const overallMargin = totalPaid > 0 ? ((totalProfit / totalPaid) * 100).toFixed(2) : 0;
+
+  return ApiResponse.success(res, {
+    transactions: profitAnalysis,
+    summary: {
+      total_invoiced: totalInvoiced,
+      total_paid: totalPaid,
+      total_cost: totalCost,
+      total_profit: totalProfit,
+      profit_margin: Number(overallMargin),
+      total_invoices: invoices.length,
+    },
+  }, "Profit analysis fetched");
+});
+
+// ===========================
+// GET /api/statements/profit-analysis/by-month
+// ===========================
+// Admin only — profit analysis filtered by month
+export const getProfitAnalysisByMonth = catchAsync(async (req, res) => {
+  const { year, month } = req.query;
+
+  if (!year || !month) {
+    throw new AppError("Year and month are required", 400);
+  }
+
+  const startDate = new Date(Number(year), Number(month) - 1, 1);
+  const endDate = new Date(Number(year), Number(month), 1);
+
+  // Fetch invoices for the month with payment info
+  const invoices = await Invoice.find({
+    createdAt: { $gte: startDate, $lt: endDate }
+  })
+    .populate("buyer", "name user_id")
+    .populate("proforma_invoice", "proforma_number payment_received")
+    .sort({ createdAt: -1 })
+    .select("invoice_number buyer buyer_name total_amount amount_paid balance_due status proforma_invoice proforma_invoice_number createdAt exchange_rate");
+
+  // Get PI IDs from invoices
+  const piIds = invoices
+    .map(inv => inv.proforma_invoice?._id || inv.proforma_invoice)
+    .filter(Boolean);
+
+  // Get allocations for these PIs
+  const allocations = await PIAllocation.find({
+    proforma_invoice: { $in: piIds }
+  }).select("proforma_invoice total_cost");
+
+  // Create cost map
+  const piCostMap = new Map();
+  allocations.forEach((alloc) => {
+    const piId = alloc.proforma_invoice?.toString();
+    if (piId) {
+      const current = piCostMap.get(piId) || 0;
+      piCostMap.set(piId, current + (alloc.total_cost || 0));
+    }
+  });
+
+  // Build profit analysis
+  const profitAnalysis = invoices.map((inv) => {
+    const invoiceTotal = inv.total_amount || 0;
+    const amountPaid = inv.amount_paid || inv.proforma_invoice?.payment_received || 0;
+    const balanceDue = inv.balance_due || (invoiceTotal - amountPaid);
+    const piId = inv.proforma_invoice?._id?.toString() || inv.proforma_invoice?.toString();
+    const cost = piCostMap.get(piId) || 0;
+    const profit = amountPaid - cost;
+    const profitMargin = amountPaid > 0 ? ((profit / amountPaid) * 100).toFixed(2) : 0;
+
+    return {
+      date: inv.createdAt,
+      invoice_number: inv.invoice_number,
+      buyer: inv.buyer,
+      buyer_name: inv.buyer_name || inv.buyer?.name,
+      proforma_number: inv.proforma_invoice_number || inv.proforma_invoice?.proforma_number,
+      invoice_total: invoiceTotal,
+      amount_paid: amountPaid,
+      balance_due: balanceDue,
+      cost,
+      profit,
+      profit_margin: Number(profitMargin),
+      payment_status: inv.status || (amountPaid >= invoiceTotal ? "PAID" : amountPaid > 0 ? "PARTIAL" : "UNPAID"),
+      exchange_rate: inv.exchange_rate || 1,
+    };
+  });
+
+  // Calculate totals
+  const totalInvoiced = profitAnalysis.reduce((sum, p) => sum + p.invoice_total, 0);
+  const totalPaid = profitAnalysis.reduce((sum, p) => sum + p.amount_paid, 0);
+  const totalCost = profitAnalysis.reduce((sum, p) => sum + p.cost, 0);
+  const totalProfit = totalPaid - totalCost;
+  const overallMargin = totalPaid > 0 ? ((totalProfit / totalPaid) * 100).toFixed(2) : 0;
+
+  return ApiResponse.success(res, {
+    transactions: profitAnalysis,
+    summary: {
+      total_invoiced: totalInvoiced,
+      total_paid: totalPaid,
+      total_cost: totalCost,
+      total_profit: totalProfit,
+      profit_margin: Number(overallMargin),
+      total_invoices: invoices.length,
+    },
+    year,
+    month,
+  }, "Monthly profit analysis fetched");
 });

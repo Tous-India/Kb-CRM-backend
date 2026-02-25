@@ -1,75 +1,163 @@
 # KB CRM
 
-A full-stack CRM (Customer Relationship Management) system built for managing buyers, orders, invoices, quotations, and product catalogs.
+A full-stack CRM (Customer Relationship Management) system built for KB Enterprises to manage buyers, orders, invoices, quotations, proforma invoices, and product catalogs with comprehensive admin and buyer portals.
 
 ## Tech Stack
 
 ### Backend
-- **Runtime:** Node.js
-- **Framework:** Express 5
-- **Database:** MongoDB with Mongoose 9
-- **Auth:** JWT (JSON Web Tokens)
-- **File Uploads:** Multer + Cloudinary
-- **Validation:** Joi
-- **PDF Generation:** Built-in PDF generator for invoices/quotations
-- **Security:** Helmet, CORS, bcryptjs
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Node.js | 18+ | Runtime environment |
+| Express | 5.x | Web framework |
+| MongoDB | 7.x | NoSQL database |
+| Mongoose | 9.x | MongoDB ODM |
+| JWT | 9.x | Authentication tokens |
+| Multer | 2.x | File uploads |
+| Cloudinary | 2.x | Cloud image storage |
+| Nodemailer | 7.x | Email service |
+| PDFKit | 0.17.x | PDF generation |
+| Joi | 18.x | Request validation |
+| Helmet | 8.x | Security headers |
+| bcrypt | 6.x | Password hashing |
 
 ### Frontend
-- **Framework:** React 19 (Vite)
-- **UI Library:** MUI 7 (Material UI) + Tailwind CSS 4
-- **State Management:** Zustand
-- **Data Fetching:** TanStack React Query v5
-- **HTTP Client:** Axios
-- **Routing:** React Router v7
-- **Date Handling:** Day.js
-- **PDF Export:** html2pdf.js
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19.x | UI library |
+| Vite | 7.x | Build tool |
+| MUI (Material UI) | 7.x | Component library |
+| Tailwind CSS | 4.x | Utility-first CSS |
+| React Router | 7.x | Client-side routing |
+| TanStack Query | 5.x | Data fetching & caching |
+| Zustand | 5.x | State management |
+| Axios | 1.x | HTTP client |
+| html2pdf.js | 0.12.x | PDF export |
+| react-toastify | 10.x | Toast notifications |
+
+---
 
 ## Project Structure
 
 ```
 KB CRM/
-├── frontend2/                 # React frontend (Vite)
+├── frontend2/                      # React frontend (Vite)
 │   └── src/
-│       ├── admin/             # Admin panel
-│       │   ├── pages/         # Admin pages (Dashboard, Orders, PendingApprovals, etc.)
-│       │   └── components/    # Print preview components, SendEmailModal
-│       ├── buyer/             # Buyer portal pages
-│       ├── pages/             # Public pages (Login, Register, ForgotPassword)
-│       ├── components/        # Shared components (ProtectedRoute, Logo, NotificationSettings)
-│       ├── context/           # React context providers (Auth, Currency, NotificationCounts)
-│       ├── hooks/             # React Query hooks, useDesktopNotifications
-│       ├── services/          # API service modules
-│       │   └── api/           # Axios client & endpoint config
-│       ├── stores/            # Zustand stores (cart, notifications)
-│       └── utils/             # Utility functions (toast, passwordValidator, notificationSound)
+│       ├── admin/                  # Admin panel
+│       │   ├── layout/             # AdminLayout.jsx (sidebar, header, notifications)
+│       │   ├── pages/              # 25+ admin pages
+│       │   └── components/         # Print previews, modals
+│       │
+│       ├── buyer/                  # Buyer portal
+│       │   ├── layout/             # BuyerLayout.jsx
+│       │   ├── pages/              # 17 buyer pages
+│       │   └── components/         # Header, Sidebar, PdfModal, Cards
+│       │
+│       ├── pages/                  # Public/shared pages
+│       │   ├── AuthPage.jsx        # Combined Login/Register with animations
+│       │   ├── ForgotPassword.jsx  # Password reset flow
+│       │   └── NotFound.jsx        # 404 page
+│       │
+│       ├── components/             # Shared components
+│       │   ├── ProtectedRoute.jsx  # Route protection by role
+│       │   ├── NotificationSettings.jsx
+│       │   ├── Logo.jsx
+│       │   ├── LoadingSpinner.jsx
+│       │   └── ErrorDisplay.jsx
+│       │
+│       ├── context/                # React Context providers
+│       │   ├── AuthContext.jsx     # Authentication state
+│       │   ├── CurrencyContext.jsx # USD/INR conversion rates
+│       │   └── NotificationCountsContext.jsx
+│       │
+│       ├── hooks/                  # Custom React Query hooks
+│       │   ├── useProducts.js      # Product CRUD operations
+│       │   ├── useOrders.js        # Order management
+│       │   ├── useInvoices.js      # Invoice operations
+│       │   ├── useQuotations.js    # Quotation lifecycle
+│       │   ├── useDispatchedOrders.js
+│       │   ├── usePurchaseOrders.js
+│       │   ├── useUsers.js         # User management
+│       │   ├── useDashboard.js     # Dashboard stats
+│       │   └── useDesktopNotifications.js
+│       │
+│       ├── stores/                 # Zustand state stores
+│       │   ├── useCartStore.js     # Shopping cart
+│       │   ├── useProductsStore.js # Product filters/search
+│       │   ├── useUsersStore.js    # User list state
+│       │   ├── useInvoicesStore.js # Invoice filters
+│       │   ├── useDispatchedOrdersStore.js
+│       │   ├── useQuoteRequestStore.js
+│       │   ├── useNotificationStore.js
+│       │   └── useArchivesStore.js
+│       │
+│       ├── services/               # API service modules
+│       │   ├── api/
+│       │   │   ├── client.js       # Axios instance with interceptors
+│       │   │   └── endpoints.js    # API endpoint constants
+│       │   ├── auth.service.js
+│       │   ├── products.service.js
+│       │   ├── orders.service.js
+│       │   ├── invoices.service.js
+│       │   ├── quotations.service.js
+│       │   ├── proformaInvoices.service.js
+│       │   ├── dispatches.service.js
+│       │   ├── paymentRecords.service.js
+│       │   ├── suppliers.service.js
+│       │   ├── piAllocations.service.js
+│       │   └── ... (18 service modules)
+│       │
+│       └── utils/                  # Utility functions
+│           ├── passwordValidator.js
+│           ├── notificationSound.js
+│           └── toast.js
 │
-└── backend/              # Node.js backend
+└── backend/                        # Node.js backend
     └── src/
-        ├── modules/           # Feature modules
-        │   ├── auth/          # Authentication (login, multi-step register, forgot password, JWT)
-        │   ├── users/         # User management (SUPER_ADMIN, SUB_ADMIN, BUYER, approval workflow)
-        │   ├── products/      # Product catalog
-        │   ├── categories/    # Product categories
-        │   ├── brands/        # Product brands
-        │   ├── carts/         # Shopping cart
-        │   ├── purchaseOrders/# Purchase orders
-        │   ├── quotations/    # Quotations with PDF download
-        │   ├── orders/        # Orders (open, dispatched)
-        │   ├── proformaInvoices/ # Proforma invoices
-        │   ├── invoices/      # Invoices (auto + manual creation)
-        │   ├── payments/      # Payment tracking
-        │   ├── paymentRecords/# Buyer payment submissions
-        │   ├── dispatches/    # Order dispatches
-        │   ├── statements/    # Account statements
-        │   ├── dashboard/     # Dashboard analytics
-        │   └── settings/      # App settings
-        ├── middlewares/       # Auth, role, permission middleware
-        ├── utils/             # ApiResponse, AppError, PDF generator, Cloudinary
-        │   ├── emailService.js    # Nodemailer email sending
-        │   ├── emailTemplates.js  # HTML email templates
-        │   └── pdfGenerator.js    # PDF generation for documents
-        └── seeds/             # Database seeders
+        ├── modules/                # Feature modules (MVC pattern)
+        │   ├── auth/               # Authentication (JWT, OTP, multi-step register)
+        │   ├── users/              # User management & approval workflow
+        │   ├── products/           # Product catalog
+        │   ├── categories/         # Product categories with subcategories
+        │   ├── brands/             # Product brands with logos
+        │   ├── carts/              # Shopping cart
+        │   ├── quotations/         # Quotation lifecycle (5 statuses)
+        │   ├── orders/             # Order management
+        │   ├── proformaInvoices/   # PI management
+        │   ├── invoices/           # Invoice generation
+        │   ├── dispatches/         # Shipment tracking
+        │   ├── payments/           # Payment tracking
+        │   ├── paymentRecords/     # Buyer payment submissions
+        │   ├── purchaseOrders/     # Purchase orders
+        │   ├── suppliers/          # Supplier management
+        │   ├── piAllocations/      # PI item allocations to suppliers
+        │   ├── purchaseDashboard/  # Purchase analytics
+        │   ├── statements/         # Account statements
+        │   ├── dashboard/          # Admin dashboard analytics
+        │   ├── reports/            # Report generation
+        │   ├── archives/           # Document archiving
+        │   ├── supplierOrders/     # Supplier order tracking
+        │   └── settings/           # App settings
+        │
+        ├── middlewares/            # Express middleware
+        │   ├── auth.js             # JWT verification
+        │   ├── roleCheck.js        # Role-based access
+        │   └── permissions.js      # Permission-based access
+        │
+        ├── utils/                  # Utility functions
+        │   ├── apiResponse.js      # Standardized API responses
+        │   ├── AppError.js         # Custom error class
+        │   ├── catchAsync.js       # Async error wrapper
+        │   ├── cloudinaryUpload.js # Image upload helper
+        │   ├── emailService.js     # Nodemailer wrapper
+        │   ├── emailTemplates.js   # HTML email templates (15+ templates)
+        │   ├── pdfGenerator.js     # Invoice/quotation PDF generation
+        │   └── reportPdfGenerator.js
+        │
+        └── seeds/                  # Database seeders
+            └── seedAdmin.js        # Create initial SUPER_ADMIN
 ```
+
+---
 
 ## Getting Started
 
@@ -77,6 +165,7 @@ KB CRM/
 - Node.js 18+
 - MongoDB (local or Atlas)
 - Cloudinary account (for image uploads)
+- Gmail account with App Password (for emails)
 
 ### Backend Setup
 
@@ -88,9 +177,15 @@ npm install
 Create a `.env` file in `backend/`:
 
 ```env
+# Server
 PORT=5000
+NODE_ENV=development
+
+# Database
 MONGODB_URI=mongodb://localhost:27017/kb-crm
-JWT_SECRET=your_jwt_secret
+
+# JWT
+JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRES_IN=7d
 
 # Cloudinary (Image uploads)
@@ -103,7 +198,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+SMTP_PASS=your-16-char-app-password
 EMAIL_FROM_NAME=KB Enterprises
 EMAIL_FROM_ADDRESS=info@kbenterprise.org
 ADMIN_NOTIFICATION_EMAIL=admin@kbenterprise.org
@@ -112,7 +207,7 @@ ADMIN_NOTIFICATION_EMAIL=admin@kbenterprise.org
 FRONTEND_URL=http://localhost:5173
 ```
 
-### Gmail SMTP Setup
+#### Gmail SMTP Setup
 1. Enable 2-Factor Authentication on Gmail account
 2. Go to Google Account → Security → App Passwords
 3. Generate App Password for "Mail"
@@ -127,7 +222,8 @@ npm run seed
 Start the server:
 
 ```bash
-npm run dev
+npm run dev       # Development with nodemon
+npm start         # Production
 ```
 
 ### Frontend Setup
@@ -138,344 +234,268 @@ npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:5173` and connects to the backend on `http://localhost:5000`.
+| Environment | URL |
+|-------------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:5000/api |
 
-## User Roles
+---
 
-| Role | Description |
-|------|-------------|
-| **SUPER_ADMIN** | Full access to all features and user management |
-| **SUB_ADMIN** | Limited admin access based on assigned permissions |
-| **BUYER** | Customer account with access to orders, invoices, and statements |
+## User Roles & Permissions
 
-## Buyer Registration Flow
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| **SUPER_ADMIN** | Full system access | All permissions |
+| **SUB_ADMIN** | Limited admin access | Configurable subset of: `manage_users`, `manage_orders`, `manage_products`, `view_analytics`, `manage_quotes`, `manage_payments`, `manage_invoices`, `manage_dispatch` |
+| **BUYER** | Customer account | Access to own orders, invoices, statements, cart, quotations |
 
-The system implements a secure multi-step registration process with email OTP verification and admin approval:
+---
+
+## Authentication Flows
+
+### Buyer Registration (4-Step Wizard)
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Step 1: Basic  │────►│  Step 2: Verify │────►│  Step 3: Create │────►│  Step 4: Done   │
+│  Info           │     │  Email (OTP)    │     │  Password       │     │  (Pending)      │
+└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
+      │                       │                       │                       │
+      │ Name, Email,          │ 6-digit OTP          │ Password +             │ Admin approval
+      │ Phone, Company        │ (10 min expiry)      │ Confirmation           │ required
+```
+
+**Password Requirements:**
+- Minimum 8 characters
+- At least 1 uppercase letter (A-Z)
+- At least 1 lowercase letter (a-z)
+- At least 1 number (0-9)
+- At least 1 special character (!@#$%^&*)
+
+### Forgot Password Flow
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Step 1: Enter  │────►│  Step 2: Verify │────►│  Step 3: Create │
-│  Basic Info     │     │  Email (OTP)    │     │  Password       │
+│  Enter Email    │────►│  Verify OTP     │────►│  New Password   │────► Login
 └─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                                               │
-        │  Name, Email,                                 │  Strong password
-        │  Phone, Company                               │  validation
-        │                                               ▼
-                                               ┌─────────────────┐
-                                               │  Registration   │
-                                               │  Complete       │
-                                               │  (PENDING)      │
-                                               └────────┬────────┘
-                                                        │
-                    ┌───────────────────────────────────┴───────────────────────────────────┐
-                    │                                                                       │
-                    ▼                                                                       ▼
-           ┌─────────────────┐                                                    ┌─────────────────┐
-           │  Admin Email    │                                                    │  Dashboard      │
-           │  Notification   │                                                    │  Notification   │
-           └─────────────────┘                                                    └─────────────────┘
-                    │                                                                       │
-                    └───────────────────────────────────┬───────────────────────────────────┘
-                                                        │
-                                                        ▼
-                                               ┌─────────────────┐
-                                               │  Admin Reviews  │
-                                               │  & Approves     │
-                                               └────────┬────────┘
-                                                        │
-                                                        ▼
-                                               ┌─────────────────┐
-                                               │  Buyer Email:   │
-                                               │  "You can now   │
-                                               │  login!"        │
-                                               └─────────────────┘
 ```
 
-### Registration Features
-- **6-digit OTP** sent to email for verification (10 min expiry)
-- **Strong Password Requirements**:
-  - Minimum 8 characters
-  - At least 1 uppercase letter (A-Z)
-  - At least 1 lowercase letter (a-z)
-  - At least 1 number (0-9)
-  - At least 1 special character (!@#$%^&*)
-- **Admin Approval Workflow**: Buyers cannot login until approved
-- **Email Notifications**: OTP, approval, and rejection emails
-
-## Forgot Password Flow
-
-Secure password reset using OTP verification:
+### Admin Approval Workflow
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Step 1: Enter  │────►│  Step 2: Verify │────►│  Step 3: Create │
-│  Email Address  │     │  Email (OTP)    │     │  New Password   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                        │
-                                                        ▼
-                                               ┌─────────────────┐
-                                               │  Password Reset │
-                                               │  Complete       │
-                                               │  → Login Page   │
-                                               └─────────────────┘
+Registration Complete → Admin Notification Email + Dashboard Badge
+                     ↓
+            Admin Reviews Application
+                     ↓
+         ┌──────────┴──────────┐
+         ↓                     ↓
+    [Approve]              [Reject]
+         ↓                     ↓
+   Buyer can login      Rejection email
+   + Approval email      with reason
 ```
 
-## Admin Pending Approvals
+---
 
-Admins can review and approve/reject buyer registrations:
+## Quotation Workflow
 
-| Action | Description | Email Sent |
-|--------|-------------|------------|
-| **View Details** | See full registration details | - |
-| **Approve** | Activate account, allow login | Approval email with login link |
-| **Reject** | Deny registration with reason | Rejection email with reason |
-
-The admin sidebar shows a badge count for pending approvals.
-
-## Quotation Flow
-
-The quotation system follows a structured workflow with 5 status tabs:
+The quotation system has 5 distinct status tabs:
 
 ```
 ┌─────────┐     Buyer      ┌──────────┐     Admin      ┌───────────┐
-│  Open   │ ──────────────►│ Accepted │ ──────────────►│ Converted │
+│  OPEN   │ ──────────────►│ ACCEPTED │ ──────────────►│ CONVERTED │
 │(Pending)│    Accepts     │          │  Convert to PI │  (Frozen) │
 └────┬────┘                └──────────┘                └───────────┘
      │
      │ Buyer Rejects
      ▼
 ┌──────────┐
-│ Rejected │ ── Renew ──► Back to Open
+│ REJECTED │ ── Renew ──► Back to OPEN
 └──────────┘
 
      │ No Response (Expiry)
      ▼
 ┌─────────┐
-│ Expired │ ── Renew/Clone ──► Back to Open
+│ EXPIRED │ ── Renew/Clone ──► Back to OPEN
 └─────────┘
 ```
 
-### Quotation Tabs
+| Tab | Description | Available Actions |
+|-----|-------------|-------------------|
+| **Open** | Awaiting buyer response | View, Email, Print/PDF, Edit, Clone |
+| **Accepted** | Buyer accepted | View, Email, Print/PDF, Edit, Clone, **Convert to PI** |
+| **Rejected** | Buyer rejected | View, Email, Print/PDF, Edit, Renew |
+| **Expired** | Validity expired | View, Email, Print/PDF, Renew, Clone |
+| **Converted** | Converted to PI (frozen) | View, Email, Print/PDF only |
 
-| Tab | Description | Admin Actions |
-|-----|-------------|---------------|
-| **Open** | Sent quotations awaiting buyer response | View, Email, Print/PDF, Edit, Clone |
-| **Accepted** | Buyer accepted quotations | View, Email, Print/PDF, Edit, Clone, Convert to PI |
-| **Rejected** | Buyer rejected quotations | View, Email, Print/PDF, Edit, Renew |
-| **Expired** | Expired without buyer response | View, Email, Print/PDF, Renew, Clone |
-| **Converted** | Converted to Proforma Invoice (frozen) | View, Email, Print/PDF only |
-
-### Key Features
-- **Buyer-driven status**: Buyer accepts or rejects quotations
-- **Admin notification**: Admin gets notified when buyer responds
-- **Convert to PI**: Accepted quotations can be converted to Proforma Invoice with editable prices, quantities, and exchange rate
-- **Renew**: Rejected/Expired quotations can be renewed with updated pricing
-- **Clone**: Create a copy of any quotation in Open tab
-- **Frozen state**: Converted quotations cannot be edited or cloned
-
-## Print Preview Components
-
-Professional A4-format print preview components for all documents:
-
-| Component | Description | Theme Color |
-|-----------|-------------|-------------|
-| `InvoicePrintPreview` | Tax/Non-tax invoice preview | Blue (#1976d2) |
-| `QuotationPrintPreview` | Quotation document preview | Orange (#ed6c02) |
-| `PerformaInvoicePrintPreview` | Proforma invoice preview | Purple (#9c27b0) |
-| `DispatchPrintPreview` | Dispatch document with tracking | Green (#4caf50) |
-| `StatementPrintPreview` | Account statement preview | Blue (#1976d2) |
-
-### Print Features
-- Professional A4 layout with company branding
-- Dual currency display (USD and INR)
-- Exchange rate display on all documents
-- Bank details and stamp section
-- Print/PDF via browser's print dialog ("Save as PDF")
-
-## API Modules
-
-All API endpoints follow RESTful conventions under `/api/`:
-
-| Module | Endpoints |
-|--------|-----------|
-| Auth | Login, Multi-step Register (initiate, verify-otp, complete), Forgot Password (initiate, verify-otp, reset), Profile |
-| Users | CRUD, Buyers list, Sub-admins, Activate/Deactivate, Pending Approvals, Approve/Reject |
-| Products | CRUD with image upload, filtering by category/brand/stock |
-| Categories | CRUD |
-| Brands | CRUD with logo upload |
-| Purchase Orders | CRUD, status updates, PDF |
-| Quotations | CRUD, accept/reject, convert to proforma/order, PDF |
-| Orders | CRUD, dispatch, record payment |
-| Proforma Invoices | CRUD, convert to invoice, PDF |
-| Invoices | CRUD, manual creation, status updates, PDF |
-| Payments | CRUD, record payments against invoices |
-| Statements | Account statements per buyer |
-| Dashboard | Analytics and summary stats |
-| Settings | Application-wide settings |
-
-## Admin Pages
-
-| Page | Description |
-|------|-------------|
-| Dashboard | Overview stats, recent activity, charts |
-| Users | User management with CRUD, profile details, activity tabs |
-| Pending Approvals | Review and approve/reject buyer registrations |
-| Products | Product catalog with filtering, stock status |
-| Add/Edit Product | Product form with image upload |
-| Purchase Orders | PO management and tracking |
-| Quotations | Quote lifecycle with 5 tabs (Open, Accepted, Rejected, Expired, Converted) |
-| Orders | Open orders management with professional invoice preview |
-| Dispatched Orders | Track dispatched shipments with dispatch/invoice preview |
-| Proforma Invoices | Proforma invoice management |
-| Invoices | Invoice management with PDF download |
-| Manual Invoice | Create invoices manually with status tracking (PAID/UNPAID/PARTIAL) |
-| Payments | Payment tracking and recording |
-| Statements | Account statement generation with professional preview |
-| Buyer Transactions | Transaction history per buyer |
-
-## Recent Updates
-
-### Buyer Registration & Authentication
-- **Multi-step Registration**: 4-step wizard (Basic Info → Verify Email → Create Password → Success)
-- **Email OTP Verification**: 6-digit code with 10-minute expiry and resend functionality
-- **Strong Password Validation**: Real-time password strength indicator with requirement checklist
-- **Admin Approval Workflow**: Buyers must be approved by admin before login
-- **Pending Approvals Page**: Admin dashboard to review, approve, or reject registrations
-- **Forgot Password Flow**: OTP-based password reset with strong password enforcement
-- **Email Notifications**:
-  - Registration OTP email
-  - Admin notification for new registrations
-  - Buyer approval/rejection emails
-  - Password reset OTP email
-
-### Email Notification System
-Professional HTML email templates for all document types:
-
-| Email Type | Trigger | Recipient |
-|------------|---------|-----------|
-| Registration OTP | User registers | Buyer |
-| Admin New Registration | Registration complete | Admin |
-| Buyer Approval | Admin approves | Buyer |
-| Buyer Rejection | Admin rejects | Buyer |
-| Password Reset OTP | Forgot password | Buyer |
-| Quotation | Send quotation | Buyer |
-| Proforma Invoice | Send PI | Buyer |
-| Invoice | Send invoice | Buyer |
-| Dispatch Notification | Order dispatched | Buyer |
-| New Quote Request | Buyer submits order | Admin |
-| Quotation Accepted | Buyer accepts quote | Admin |
-| Quotation Rejected | Buyer rejects quote | Admin |
-| Payment Submitted | Buyer submits payment | Admin |
-
-### Manual Invoice Page Enhancements
-- **Simplified Form**: Removed Items tab - items are now optional for manual invoices
-- **Invoice Status**: Added Invoice Status dropdown with options:
-  - `UNPAID` - Default status for new invoices
-  - `PAID` - Fully paid invoices
-  - `PARTIAL` - Partially paid invoices
-- **Invoice Types**: Streamlined to only 2 types:
-  - Tax Invoice
-  - Reimbursement Invoice
-- **Real-time Summary**: Invoice status displayed in real-time in the Invoice Summary section
-- **Professional Print Preview**: Matches the design of other invoice pages with:
-  - Company logo and header
-  - From/Bill To address boxes
-  - Invoice details grid with status badge
-  - Items table (if items exist)
-  - Amount in words + Totals breakdown
-  - Bank details section
-  - Terms & Conditions
-  - Authorized signatory section
-
-### Quotations Page Redesign
-- Replaced multiple tables with tab-based layout
-- 5 tabs: Open, Accepted, Rejected, Expired, Converted
-- Buyer-driven accept/reject flow (admin views status only)
-- Convert to PI with editable options (price, quantity, exchange rate)
-- Renew functionality for rejected/expired quotations
-
-### Professional Print Previews
-- New print preview components for all document types
-- Consistent A4 professional design across all documents
-- Dual currency (USD/INR) with exchange rate display
-- Combined Print/PDF button using browser's print dialog
+---
 
 ## Invoice Status Workflow
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    MANUAL INVOICE                        │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│   ┌──────────┐    Payment    ┌──────────┐               │
-│   │  UNPAID  │ ─────────────►│ PARTIAL  │               │
-│   │  (Red)   │   Partial     │ (Orange) │               │
-│   └────┬─────┘               └────┬─────┘               │
-│        │                          │                      │
-│        │ Full Payment             │ Remaining Payment    │
-│        ▼                          ▼                      │
-│   ┌──────────────────────────────────┐                  │
-│   │              PAID                 │                  │
-│   │             (Green)               │                  │
-│   └──────────────────────────────────┘                  │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    INVOICE STATUS                         │
+├──────────────────────────────────────────────────────────┤
+│                                                           │
+│   ┌──────────┐    Partial     ┌──────────┐               │
+│   │  UNPAID  │ ─────────────► │ PARTIAL  │               │
+│   │  (Red)   │   Payment      │ (Orange) │               │
+│   └────┬─────┘                └────┬─────┘               │
+│        │                           │                      │
+│        │ Full Payment              │ Remaining Payment    │
+│        ▼                           ▼                      │
+│   ┌─────────────────────────────────────┐                │
+│   │              PAID                    │                │
+│   │             (Green)                  │                │
+│   └─────────────────────────────────────┘                │
+│                                                           │
+└──────────────────────────────────────────────────────────┘
 ```
 
-### Status Badge Colors
-| Status | Color | Description |
-|--------|-------|-------------|
-| **UNPAID** | Red | Invoice created, no payment received |
-| **PARTIAL** | Orange | Partial payment received |
-| **PAID** | Green | Full payment received |
+---
+
+## Admin Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Dashboard | `/admin` | Overview stats, charts, recent activity |
+| Users | `/admin/users` | User CRUD, profile details, activity tabs |
+| Pending Approvals | `/admin/pending-approvals` | Review/approve/reject buyer registrations |
+| Products | `/admin/products` | Product catalog with filters |
+| Add/Edit Product | `/admin/products/add` `/admin/products/edit/:id` | Product form with image upload |
+| Categories | `/admin/categories` | Category management with subcategories |
+| Brands | `/admin/brands` | Brand management with logos |
+| Quotations | `/admin/quotations` | 5-tab quotation management |
+| Proforma Invoices | `/admin/performa-invoices` | PI management with item editing |
+| Orders | `/admin/orders` | Open orders with invoice preview |
+| Dispatched Orders | `/admin/dispatched-orders` | Shipment tracking |
+| Invoices | `/admin/invoices` | Invoice management |
+| Manual Invoice | `/admin/manual-invoice` | Create manual invoices |
+| Payments | `/admin/payments` | Payment tracking |
+| Payment Records | `/admin/payment-records` | Buyer payment submissions |
+| Statements | `/admin/statements` | Account statement generation |
+| Buyer Transactions | `/admin/buyer-transactions/:id` | Per-buyer transaction history |
+| Purchase Orders | `/admin/purchase-orders` | PO management |
+| Suppliers | `/admin/suppliers` | Supplier management |
+| PI Allocation | `/admin/pi-allocation` | Allocate PI items to suppliers |
+| Purchase Dashboard | `/admin/purchase-dashboard` | Purchase analytics & profit tracking |
+| Profit Analysis | `/admin/profit-analysis` | Profit/loss analysis |
+| Archives | `/admin/archives` | Archived documents |
+
+---
+
+## Buyer Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Dashboard | `/` | Overview, recent orders, stats |
+| Products | `/products` | Product catalog with search/filters |
+| Single Product | `/products/:id` | Product details |
+| Cart | `/cart` | Shopping cart |
+| Web Orders | `/web-orders` | Order history |
+| Quote | `/quote` | View quotations from admin |
+| Quote Request | `/quote-request` | Request new quotations |
+| Open Orders | `/open-orders` | Active orders |
+| Shipments | `/shipments` | Track shipments |
+| Proforma Invoices | `/proforma-invoices` | View PIs |
+| Invoices | `/invoices` | Invoice history |
+| Statements | `/statements` | Account statements |
+| 8130 | `/8130` | 8130 certificates |
+| Multi Search | `/multi-search` | Multi-part search engine |
+| Profile | `/profile` | User profile management |
+
+---
+
+## Print Preview Components
+
+Professional A4-format print preview components:
+
+| Component | Document Type | Theme Color |
+|-----------|---------------|-------------|
+| `InvoicePrintPreview` | Tax/Non-tax Invoice | Blue (#1976d2) |
+| `QuotationPrintPreview` | Quotation | Orange (#ed6c02) |
+| `PerformaInvoicePrintPreview` | Proforma Invoice | Purple (#9c27b0) |
+| `DispatchPrintPreview` | Dispatch/Shipment | Green (#4caf50) |
+| `StatementPrintPreview` | Account Statement | Blue (#1976d2) |
+| `PurchaseOrderPrintPreview` | Purchase Order | Blue (#1976d2) |
+
+**Features:**
+- Professional A4 layout with company branding
+- Dual currency display (USD and INR)
+- Exchange rate display
+- Bank details and authorized signatory section
+- Print/PDF via browser's print dialog
+
+---
+
+## Email Notification System
+
+| Email Type | Trigger | Recipient |
+|------------|---------|-----------|
+| Registration OTP | User initiates registration | Buyer |
+| Admin New Registration | Registration complete | Admin |
+| Buyer Approval | Admin approves registration | Buyer |
+| Buyer Rejection | Admin rejects registration | Buyer |
+| Password Reset OTP | Forgot password request | User |
+| Quotation | Admin sends quotation | Buyer |
+| Proforma Invoice | Admin sends PI | Buyer |
+| Invoice | Admin sends invoice | Buyer |
+| Dispatch Notification | Order dispatched | Buyer |
+| New Quote Request | Buyer submits quote request | Admin |
+| Quotation Accepted | Buyer accepts quotation | Admin |
+| Quotation Rejected | Buyer rejects quotation | Admin |
+| Payment Submitted | Buyer submits payment | Admin |
+
+---
+
+## API Endpoints
+
+All endpoints are under `/api/` prefix:
+
+| Module | Base Path | Key Endpoints |
+|--------|-----------|---------------|
+| Auth | `/auth` | `POST /login`, `POST /register/initiate`, `POST /register/verify-otp`, `POST /register/complete`, `POST /forgot-password/*` |
+| Users | `/users` | CRUD, `GET /pending`, `POST /:id/approve`, `POST /:id/reject`, `PATCH /:id/toggle-status` |
+| Products | `/products` | CRUD with image upload, filters by category/brand/stock |
+| Categories | `/categories` | CRUD with subcategories |
+| Brands | `/brands` | CRUD with logo upload |
+| Quotations | `/quotations` | CRUD, `POST /:id/accept`, `POST /:id/reject`, `POST /:id/convert-to-pi` |
+| Proforma Invoices | `/proforma-invoices` | CRUD, `POST /:id/convert-to-invoice` |
+| Orders | `/orders` | CRUD, `POST /:id/dispatch` |
+| Invoices | `/invoices` | CRUD, manual creation, status updates |
+| Dispatches | `/dispatches` | CRUD, tracking updates |
+| Payments | `/payments` | CRUD, record against invoices |
+| Payment Records | `/payment-records` | Buyer payment submissions |
+| Purchase Orders | `/purchase-orders` | CRUD, status updates |
+| Suppliers | `/suppliers` | CRUD |
+| PI Allocations | `/pi-allocations` | Allocate PI items to suppliers |
+| Statements | `/statements` | Generate per-buyer statements |
+| Dashboard | `/dashboard` | Analytics and summary stats |
+| Archives | `/archives` | Document archiving |
+
+---
 
 ## Testing
-
-The project includes comprehensive test suites for both backend and frontend.
 
 ### Backend Testing (Jest)
 
 ```bash
 cd backend
 
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific test file
-npm test -- --testPathPattern=auth
-
-# Run in watch mode
-npm run test:watch
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+npm run test:coverage # With coverage report
 ```
 
 **Test Structure:**
 ```
 backend/tests/
-├── setup.js                    # Jest setup with MongoDB Memory Server
-├── fixtures/                   # Test data fixtures
-│   ├── users.fixture.js
-│   ├── products.fixture.js
-│   └── orders.fixture.js
-├── unit/                       # Unit tests
-│   ├── utils/                  # Utility function tests
-│   │   ├── AppError.test.js
-│   │   ├── apiResponse.test.js
-│   │   └── catchAsync.test.js
-│   └── models/                 # Mongoose model tests
-│       ├── User.test.js
-│       ├── Product.test.js
-│       ├── Order.test.js
-│       ├── Quotation.test.js
-│       ├── Invoice.test.js
-│       ├── ProformaInvoice.test.js
-│       ├── Dispatch.test.js
-│       ├── Cart.test.js
-│       └── Payment.test.js
-└── integration/                # Integration tests
-    └── auth.test.js
+├── setup.js              # Jest setup with MongoDB Memory Server
+├── fixtures/             # Test data
+├── unit/                 # Unit tests
+│   ├── utils/            # Utility tests
+│   └── models/           # Model tests
+└── integration/          # API integration tests
 ```
 
 ### Frontend Testing (Vitest)
@@ -483,72 +503,122 @@ backend/tests/
 ```bash
 cd frontend2
 
-# Run tests in watch mode
-npm test
-
-# Run tests once
-npm run test:run
-
-# Run with coverage
-npm run test:coverage
-
-# Run with UI
-npm run test:ui
+npm test              # Watch mode
+npm run test:run      # Run once
+npm run test:coverage # With coverage
+npm run test:ui       # Visual UI
 ```
 
 **Test Structure:**
 ```
 frontend2/src/__tests__/
-├── utils/                      # Utility tests
-│   └── passwordValidator.test.js
-├── stores/                     # Zustand store tests
-│   ├── useProductsStore.test.js
-│   ├── useCartStore.test.js
-│   ├── useQuoteRequestStore.test.js
-│   ├── useDispatchedOrdersStore.test.js
-│   └── useNotificationStore.test.js
-├── hooks/                      # React Query hook tests
-└── services/                   # API service tests
+├── utils/            # Utility tests
+├── stores/           # Zustand store tests
+├── hooks/            # React Query hook tests
+└── services/         # API service tests
 ```
+
+---
+
+## Database Schema
+
+See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for complete MongoDB schema documentation including:
+
+- **users** - User accounts with roles and permissions
+- **products** - Product catalog with pricing and inventory
+- **categories** - Product categories with subcategories
+- **brands** - Product brands with logos
+- **quotations** - Quotation documents with 5-status lifecycle
+- **proforma_invoices** - Proforma invoices
+- **orders** - Customer orders
+- **invoices** - Tax and reimbursement invoices
+- **dispatches** - Shipment tracking
+- **payments** - Payment records
+- **carts** - Shopping carts
+- **suppliers** - Supplier information
+- **pi_allocations** - PI item allocations to suppliers
+
+---
+
+## Environment Variables
+
+### Backend (.env)
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `PORT` | Server port (default: 5000) | Yes |
+| `NODE_ENV` | Environment (development/production) | Yes |
+| `MONGODB_URI` | MongoDB connection string | Yes |
+| `JWT_SECRET` | JWT signing secret | Yes |
+| `JWT_EXPIRES_IN` | Token expiry (default: 7d) | Yes |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | Yes |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | Yes |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | Yes |
+| `SMTP_HOST` | SMTP server host | Yes |
+| `SMTP_PORT` | SMTP server port | Yes |
+| `SMTP_SECURE` | Use TLS (true/false) | Yes |
+| `SMTP_USER` | SMTP username/email | Yes |
+| `SMTP_PASS` | SMTP password/app password | Yes |
+| `EMAIL_FROM_NAME` | Sender name | Yes |
+| `EMAIL_FROM_ADDRESS` | Sender email | Yes |
+| `ADMIN_NOTIFICATION_EMAIL` | Admin notification email | Yes |
+| `FRONTEND_URL` | Frontend URL for email links | Yes |
+
+---
 
 ## Contributing
 
 ### Git Workflow
 
 1. Create a feature branch from `main`
-2. Make your changes
+2. Make changes
 3. Run tests before committing
 4. Create a pull request
 
 ### Files Not to Commit
 
-The following files/folders are excluded via `.gitignore`:
-
 | Category | Files/Folders |
 |----------|---------------|
-| **Environment** | `.env`, `.env.*`, `*.local` |
-| **Dependencies** | `node_modules/` |
-| **Build** | `dist/`, `build/`, `out/` |
-| **IDE** | `.vscode/`, `.idea/` |
-| **OS** | `.DS_Store`, `Thumbs.db`, `nul` |
-| **Logs** | `*.log`, `logs/` |
-| **Coverage** | `coverage/`, `.nyc_output/` |
-| **Credentials** | `*.pem`, `*.key`, `credentials.json`, `secrets.json` |
-| **Backups** | `*.zip`, `*.bak`, `*-old.zip` |
-| **AI Tools** | `.claude/` |
+| Environment | `.env`, `.env.*`, `*.local` |
+| Dependencies | `node_modules/` |
+| Build | `dist/`, `build/`, `out/` |
+| IDE | `.vscode/`, `.idea/` |
+| OS | `.DS_Store`, `Thumbs.db` |
+| Logs | `*.log`, `logs/` |
+| Coverage | `coverage/`, `.nyc_output/` |
+| Credentials | `*.pem`, `*.key`, `credentials.json` |
+| Backups | `*.zip`, `*.bak` |
+| AI Tools | `.claude/` |
 
-### Environment Setup
+---
 
-Copy the example environment file and configure:
+## Screenshots
 
-```bash
-# Backend
-cp backend/.env.example backend/.env
+### Auth Pages
+- **Login/Register** - Combined auth page with animated toggle
+- **Forgot Password** - 3-step OTP-based password reset
 
-# Frontend (if needed)
-cp frontend2/.env.example frontend2/.env
-```
+### Admin Portal
+- **Dashboard** - Stats cards, charts, recent activity
+- **Quotations** - 5-tab quotation management
+- **Orders** - Order management with invoice preview
+- **PI Allocation** - Supplier allocation with profit calculation
+- **Purchase Dashboard** - Purchase analytics with INR conversion
+
+### Buyer Portal
+- **Products** - Product catalog with search and filters
+- **Cart** - Shopping cart with quantity management
+- **Invoices** - Invoice history with PDF download
+- **Statements** - Account statements with print preview
+
+---
 
 ## License
 
-This project is proprietary software owned by KB Enterprises.
+This project is proprietary software owned by KB Enterprises. All rights reserved.
+
+---
+
+## Support
+
+For issues or feature requests, please contact the development team.

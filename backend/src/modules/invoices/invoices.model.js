@@ -200,6 +200,12 @@ const InvoiceSchema = new Schema(
       default: "TAX_INVOICE",
     },
 
+    // Invoice title - customizable display title (e.g., "INVOICE", "TAX INVOICE", custom text)
+    invoice_title: {
+      type: String,
+      default: "TAX INVOICE",
+    },
+
     // Source - where this invoice came from
     source: {
       type: String,

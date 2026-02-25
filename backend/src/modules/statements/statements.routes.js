@@ -18,6 +18,10 @@ router.get("/transactions/by-buyer/:buyerId", checkPermission("manage_invoices")
 router.post("/generate", checkPermission("manage_invoices"), controller.generate);
 router.get("/customer/:customerId", checkPermission("manage_invoices"), controller.getByCustomer);
 
+// Profit Analysis routes
+router.get("/profit-analysis", checkPermission("manage_invoices"), controller.getProfitAnalysis);
+router.get("/profit-analysis/by-month", checkPermission("manage_invoices"), controller.getProfitAnalysisByMonth);
+
 // Shared
 router.get("/:id/pdf", controller.downloadPdf);
 

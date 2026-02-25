@@ -112,6 +112,7 @@ export const create = catchAsync(async (req, res) => {
     project_name,
     generate_invoice,
     invoice_number,
+    invoice_title,
     exchange_rate,
     notes,
   } = req.body;
@@ -310,7 +311,7 @@ export const create = catchAsync(async (req, res) => {
   // Generate invoice if requested
   let generatedInvoice = null;
   if (generate_invoice && invoice_number) {
-    generatedInvoice = await createInvoiceFromDispatch(dispatch, sourceDoc, invoice_number);
+    generatedInvoice = await createInvoiceFromDispatch(dispatch, sourceDoc, invoice_number, invoice_title);
     if (generatedInvoice) {
       dispatch.invoice_id = generatedInvoice._id;
       await dispatch.save();
@@ -339,7 +340,7 @@ function getTotalSourceQuantity(sourceDoc) {
 // ===========================
 // Helper: Create Invoice from Dispatch
 // ===========================
-async function createInvoiceFromDispatch(dispatch, sourceDoc, invoiceNumber) {
+async function createInvoiceFromDispatch(dispatch, sourceDoc, invoiceNumber, invoiceTitle = 'TAX INVOICE') {
   try {
     const isFromPI = dispatch.source_type === "PROFORMA_INVOICE";
     const isFromOrder = dispatch.source_type === "ORDER";
@@ -396,6 +397,7 @@ async function createInvoiceFromDispatch(dispatch, sourceDoc, invoiceNumber) {
     const invoiceData = {
       invoice_number: invoiceNumber,
       invoice_type: "TAX_INVOICE",
+      invoice_title: invoiceTitle || "TAX INVOICE",
       invoice_date: new Date(),
       source: isFromPI ? "PROFORMA_INVOICE" : "ORDER",
 
